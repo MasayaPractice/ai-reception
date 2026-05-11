@@ -7,10 +7,10 @@ SFC0010: 新規来訪者到着通知
 
 import os
 import requests
-from dotenv import load_dotenv
+
 from datetime import datetime
 
-load_dotenv()
+
 
 
 def _post_slack(text: str) -> None:
