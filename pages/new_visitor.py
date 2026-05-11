@@ -122,6 +122,7 @@ def render_new_visitor() -> None:
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
                 if st.button("📷　カメラで撮影する", key="capture_btn", use_container_width=True):
+                        from components.face import capture_face_image, extract_encoding, save_face_encoding
                     with st.spinner("カメラで撮影中...　カメラの前に顔を向けてください"):
                         rgb_image = capture_face_image()
 
@@ -172,6 +173,7 @@ def render_new_visitor() -> None:
             )
 
             if face_registered and visitor_id:
+                from components.face import save_face_encoding
                 save_face_encoding(visitor_id, captured_encoding)
 
             st.session_state.visitor_name    = name.strip()
