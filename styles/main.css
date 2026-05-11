@@ -1,0 +1,600 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap');
+
+/* ── リセット & ベース ── */
+[data-testid='stAppViewContainer'] {
+  background: linear-gradient(160deg, #eef5fb 0%, #ffffff 55%, #f0f7fc 100%);
+  min-height: 100vh;
+}
+[data-testid='stHeader'],
+[data-testid='stToolbar'],
+footer {
+  display: none !important;
+}
+[data-testid='stMain'] {
+  padding: 0 !important;
+}
+
+/* ── 全体コンテナ ── */
+.reception-wrapper {
+  font-family: 'Noto Sans JP', sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── ヘッダーバー ── */
+.header-bar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0 14px;
+  border-bottom: 1px solid rgba(74, 127, 165, 0.12);
+  margin-bottom: 8px;
+}
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #4a7fa5, #6badd4);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 3px 12px rgba(74, 127, 165, 0.28);
+}
+.logo-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: #1a2533;
+  letter-spacing: 0.04em;
+}
+.logo-sub {
+  font-size: 9px;
+  font-weight: 300;
+  color: #8fa3b8;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.clock-area {
+  text-align: right;
+}
+.clock-time {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  color: #1a2533;
+  letter-spacing: 0.06em;
+}
+.clock-date {
+  font-size: 10px;
+  color: #8fa3b8;
+  letter-spacing: 0.1em;
+  margin-top: 1px;
+}
+
+/* ── ステータスバッジ ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(74, 127, 165, 0.18);
+  border-radius: 24px;
+  padding: 8px 18px;
+  box-shadow: 0 2px 12px rgba(74, 127, 165, 0.1);
+  margin: 20px 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #4a7fa5;
+  letter-spacing: 0.08em;
+}
+.wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 16px;
+}
+.wave span {
+  display: inline-block;
+  width: 3px;
+  background: #4a7fa5;
+  border-radius: 2px;
+  animation: waveAnim 1.2s ease-in-out infinite;
+}
+.wave span:nth-child(1) {
+  height: 5px;
+  animation-delay: 0s;
+}
+.wave span:nth-child(2) {
+  height: 11px;
+  animation-delay: 0.15s;
+}
+.wave span:nth-child(3) {
+  height: 7px;
+  animation-delay: 0.3s;
+}
+.wave span:nth-child(4) {
+  height: 13px;
+  animation-delay: 0.1s;
+}
+.wave span:nth-child(5) {
+  height: 5px;
+  animation-delay: 0.25s;
+}
+@keyframes waveAnim {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.3);
+  }
+}
+
+/* ── アバターエリア ── */
+.avatar-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  position: relative;
+  margin: 12px 0 4px;
+}
+.avatar-placeholder {
+  width: 220px;
+  height: 300px;
+  position: relative;
+  animation: floatY 5s ease-in-out infinite;
+}
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.avatar-glow {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 22px;
+  background: radial-gradient(
+    ellipse,
+    rgba(74, 127, 165, 0.2) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: glowPulse 3s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: translateX(-50%) scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1.12);
+  }
+}
+
+/* ── ウェルカムテキスト ── */
+.welcome-block {
+  text-align: center;
+  margin: 20px 0 14px;
+}
+.welcome-main {
+  font-size: 36px;
+  font-weight: 300;
+  color: #1a2533;
+  letter-spacing: 0.2em;
+  line-height: 1.3;
+}
+.welcome-en {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #8fa3b8;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 180px;
+  margin: 14px auto;
+}
+.div-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #8ab4d0, transparent);
+}
+.div-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8ab4d0;
+}
+.sub-msg {
+  font-size: 13px;
+  font-weight: 300;
+  color: #4a5568;
+  letter-spacing: 0.1em;
+  line-height: 1.9;
+}
+
+/* ── CTAボタン ── */
+div[data-testid='stButton'] > button {
+  width: 100% !important;
+  height: 66px !important;
+  background: linear-gradient(
+    135deg,
+    #4a7fa5 0%,
+    #5e9fc4 50%,
+    #7ab5d4 100%
+  ) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 33px !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.14em !important;
+  box-shadow: 0 6px 28px rgba(74, 127, 165, 0.35) !important;
+  transition: all 0.18s ease !important;
+  cursor: pointer !important;
+}
+div[data-testid='stButton'] > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 36px rgba(74, 127, 165, 0.42) !important;
+}
+div[data-testid='stButton'] > button:active {
+  transform: translateY(0) !important;
+}
+
+/* ── フッターヒント ── */
+.footer-hint {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 10px;
+  color: #8fa3b8;
+  letter-spacing: 0.12em;
+}
+.page-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.page-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: #c8dce8;
+  opacity: 0.5;
+}
+.page-dot.active {
+  width: 18px;
+  background: #4a7fa5;
+  opacity: 1;
+}
+
+/* ── タブレット最適化 ── */
+@media (min-width: 768px) {
+  .welcome-main {
+    font-size: 42px;
+  }
+  .avatar-placeholder {
+    width: 260px;
+    height: 350px;
+  }
+}
+
+/* ══════════════════════════════════════════
+   フォーム共通
+══════════════════════════════════════════ */
+.form-title-block {
+  text-align: center;
+  padding: 28px 0 20px;
+}
+.form-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+.form-title {
+  font-size: 28px;
+  font-weight: 300;
+  color: #1a2533;
+  letter-spacing: 0.16em;
+}
+.form-subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 12px;
+  color: #8fa3b8;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.form-desc {
+  font-size: 13px;
+  color: #4a5568;
+  margin-top: 12px;
+  letter-spacing: 0.08em;
+}
+
+/* ══════════════════════════════════════════
+   受付選択（reception）
+══════════════════════════════════════════ */
+.purpose-card {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(74, 127, 165, 0.16);
+  border-radius: 18px;
+  padding: 28px 16px 20px;
+  text-align: center;
+  margin-bottom: 12px;
+  transition: box-shadow 0.2s;
+}
+.purpose-card:hover {
+  box-shadow: 0 6px 24px rgba(74, 127, 165, 0.14);
+}
+.purpose-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+.purpose-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a2533;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.purpose-desc {
+  font-size: 11px;
+  color: #8fa3b8;
+  letter-spacing: 0.06em;
+}
+
+/* ══════════════════════════════════════════
+   案内メッセージ（guide）
+══════════════════════════════════════════ */
+.guide-welcome {
+  text-align: center;
+  padding: 28px 0 16px;
+}
+.guide-welcome-icon {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+.guide-welcome-name {
+  font-size: 30px;
+  font-weight: 300;
+  color: #1a2533;
+  letter-spacing: 0.14em;
+}
+.guide-welcome-sub {
+  font-size: 13px;
+  color: #4a7fa5;
+  margin-top: 6px;
+  letter-spacing: 0.1em;
+}
+.guide-welcome-company {
+  font-size: 12px;
+  color: #8fa3b8;
+  margin-top: 4px;
+}
+.guide-message-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(74, 127, 165, 0.16);
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  margin: 8px 0 16px;
+}
+.guide-message-icon {
+  font-size: 30px;
+  margin-bottom: 12px;
+}
+.guide-message-main {
+  font-size: 20px;
+  font-weight: 400;
+  color: #1a2533;
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+}
+.guide-message-sub {
+  font-size: 13px;
+  color: #4a5568;
+  margin-top: 8px;
+  letter-spacing: 0.08em;
+}
+.guide-notified {
+  text-align: center;
+  font-size: 12px;
+  color: #8fa3b8;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+/* ══════════════════════════════════════════
+   管理者ダッシュボード
+══════════════════════════════════════════ */
+.admin-summary-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin: 16px 0 8px;
+}
+.admin-summary-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(74, 127, 165, 0.14);
+  border-radius: 14px;
+  padding: 16px 12px;
+  text-align: center;
+}
+.admin-summary-num {
+  font-size: 22px;
+  font-weight: 300;
+  color: #1a2533;
+  letter-spacing: 0.04em;
+}
+.admin-summary-label {
+  font-size: 10px;
+  color: #8fa3b8;
+  margin-top: 4px;
+  letter-spacing: 0.08em;
+}
+.admin-menu-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(74, 127, 165, 0.14);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.18s;
+}
+.admin-menu-card:hover {
+  box-shadow: 0 4px 18px rgba(74, 127, 165, 0.12);
+}
+.admin-menu-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.admin-menu-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a2533;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-menu-desc {
+  font-size: 11px;
+  color: #8fa3b8;
+  margin-top: 3px;
+}
+.admin-sfc-tag {
+  font-size: 9px;
+  color: #4a7fa5;
+  background: rgba(74, 127, 165, 0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+  letter-spacing: 0.04em;
+  font-weight: 400;
+}
+
+/* ══════════════════════════════════════════
+   タブレット最適化：入力フォーム幅制限
+══════════════════════════════════════════ */
+.visitor-form-card {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* Streamlit入力要素の幅制限 */
+.stTextInput,
+.stSelectbox,
+.stTextArea,
+.stCheckbox {
+  max-width: 680px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* フォームボタン幅制限 */
+[data-testid='stForm'] div[data-testid='stButton'],
+[data-testid='stForm'] div[data-testid='stFormSubmitButton'] {
+  max-width: 680px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* プライバシーノート */
+.privacy-note {
+  text-align: center;
+  font-size: 11px;
+  color: #8fa3b8;
+  letter-spacing: 0.08em;
+  margin-top: 16px;
+}
+
+/* フォーム送信ボタン */
+div[data-testid='stFormSubmitButton'] > button {
+  width: 100% !important;
+  height: 66px !important;
+  background: linear-gradient(
+    135deg,
+    #4a7fa5 0%,
+    #5e9fc4 50%,
+    #7ab5d4 100%
+  ) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 33px !important;
+  font-family: 'Noto Sans JP', sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.14em !important;
+  box-shadow: 0 6px 28px rgba(74, 127, 165, 0.35) !important;
+  transition: all 0.18s ease !important;
+  cursor: pointer !important;
+}
+div[data-testid='stFormSubmitButton'] > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 36px rgba(74, 127, 165, 0.42) !important;
+}
+
+/* アポなしフォーム外ボタン・チェックボックス幅制限 */
+div[data-testid='stButton'],
+div[data-testid='stCheckbox'] {
+  max-width: 680px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* 区切り線の幅制限 */
+hr {
+  max-width: 680px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* チェックボックスのコンテナ幅修正 */
+div[data-testid='stElementContainer']:has(div[data-testid='stCheckbox']) {
+  width: 100% !important;
+  max-width: 680px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* st.form の黒枠を消す */
+[data-testid='stForm'] {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
