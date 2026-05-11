@@ -9,7 +9,7 @@ SFC0003: 顔特徴量抽出（任意登録）
 import streamlit as st
 from components.header import render_header
 from components.db import save_visitor
-from components.face import capture_face_image, extract_encoding, save_face_encoding
+
 
 
 def render_new_visitor() -> None:
