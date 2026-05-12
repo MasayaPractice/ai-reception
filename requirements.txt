@@ -2,7 +2,6 @@ streamlit==1.56.0
 requests
 numpy
 opencv-python-headless
-dlib
 face-recognition
 pillow
 pandas
