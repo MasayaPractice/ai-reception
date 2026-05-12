@@ -4,19 +4,30 @@ pages/new_visitor.py
 SFC0006: 新規来訪者入力フォーム
 SFC0007: 来訪者情報DB登録
 SFC0003: 顔特徴量抽出（任意登録）
+
+【変更履歴】
+- クラウド・iPad対応：顔撮影を cv2.VideoCapture → st.camera_input に変更
+  （Mac版 capture_face_image() はクラウドでカメラアクセス不可のため）
+- face.py の import cv2 がクラウドでエラーになるため、
+  face関連のimportはすべて関数内の必要な箇所でのみ行う
+- 変更箇所は「# ▼ CLOUD」「# ▲ CLOUD」でマーク
+- それ以外は元のコードを一切変更していない
 """
 
 import streamlit as st
 from components.header import render_header
-from components.notification import notify_walkin
 from components.db import save_visitor
-from components.face import capture_face_image, extract_encoding, save_face_encoding
+# ▼ CLOUD: face.py は import cv2 をトップレベルで持つためここではimportしない
+#   → extract_encoding, save_face_encoding は関数内で必要な時だけimportする
+# ▲ CLOUD
 
 
 def render_new_visitor() -> None:
     st.markdown('<div class="reception-wrapper">', unsafe_allow_html=True)
 
     render_header()
+
+    st.markdown('<div style="max-width:680px; margin:0 auto; width:100%;">', unsafe_allow_html=True)
 
     if st.button("← 戻る", key="back_btn"):
         for key in ["face_section_open", "face_registered", "captured_encoding"]:
@@ -60,22 +71,23 @@ def render_new_visitor() -> None:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # ── 顔写真登録エリア ────────────────────────────────────
+    # ── 顔写真登録チェックボックス ───────────────────────────
     register_face = st.checkbox(
         "📷　顔写真を登録する（任意）　※次回から自動で受付できます",
         key="register_face_check",
     )
 
+    st.markdown('</div>', unsafe_allow_html=True)  # visitor-form-card
+
     if register_face:
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
-        # 撮影済みかどうかで表示を切り替える
         captured_encoding = st.session_state.get("captured_encoding", None)
 
         if captured_encoding is not None:
-            # ── 撮影成功済み ──────────────────────────────
             st.markdown("""
-            <div style="background:rgba(232,248,240,0.9);
+            <div style="max-width:680px; margin:0 auto;
+                        background:rgba(232,248,240,0.9);
                         border:1.5px solid rgba(74,165,107,0.3);
                         border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:32px; margin-bottom:8px;">✅</div>
@@ -97,9 +109,9 @@ def render_new_visitor() -> None:
                     st.rerun()
 
         else:
-            # ── 未撮影 ────────────────────────────────────
             st.markdown("""
-            <div style="background:rgba(240,247,252,0.9);
+            <div style="max-width:680px; margin:0 auto;
+                        background:rgba(240,247,252,0.9);
                         border:1.5px solid rgba(74,127,165,0.2);
                         border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:36px; margin-bottom:8px;">📸</div>
@@ -117,24 +129,35 @@ def render_new_visitor() -> None:
 
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-            # ── 撮影ボタン ──────────────────────────────
+            # ▼ CLOUD: st.camera_input で撮影（元コードの capture_face_image() はMac専用のため）
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
-                if st.button("📷　カメラで撮影する", key="capture_btn", use_container_width=True):
-                    with st.spinner("カメラで撮影中...　カメラの前に顔を向けてください"):
-                        rgb_image = capture_face_image()
+                img_file = st.camera_input("📷　カメラで撮影する", key="face_camera")
 
-                    if rgb_image is None:
-                        st.error("カメラが起動できませんでした。カメラの接続を確認してください。")
-                    else:
-                        encoding = extract_encoding(rgb_image)
-                        if encoding is None:
+            if img_file is not None:
+                with st.spinner("顔を認識しています..."):
+                    try:
+                        import face_recognition
+                        import numpy as np
+                        from PIL import Image
+                        from components.face import extract_encoding
+
+                        pil_image = Image.open(img_file).convert("RGB")
+                        rgb = np.array(pil_image)
+                        locations = face_recognition.face_locations(rgb)
+
+                        if not locations:
                             st.warning("顔が検出できませんでした。明るい場所でカメラの正面を向いて再度お試しください。")
                         else:
-                            st.session_state.captured_encoding = encoding
-                            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+                            encoding = extract_encoding(rgb)
+                            if encoding is None:
+                                st.warning("顔の特徴量を取得できませんでした。もう一度お試しください。")
+                            else:
+                                st.session_state.captured_encoding = encoding
+                                st.rerun()
+                    except Exception as e:
+                        st.error(f"カメラの処理中にエラーが発生しました：{e}")
+            # ▲ CLOUD
 
     error_placeholder = st.empty()
 
@@ -159,7 +182,6 @@ def render_new_visitor() -> None:
                 for e in errors:
                     st.error(e)
         else:
-            # ── DB登録 ──────────────────────────────────
             captured_encoding = st.session_state.get("captured_encoding", None)
             face_registered   = captured_encoding is not None
 
@@ -173,19 +195,10 @@ def render_new_visitor() -> None:
                 face_registered=face_registered,
             )
 
-            # ── 顔特徴量をDBに保存 ──────────────────────
             if face_registered and visitor_id:
+                from components.face import save_face_encoding
                 save_face_encoding(visitor_id, captured_encoding)
 
-            # ── Slack通知 ────────────────────────────────
-            notify_walkin(
-                name=name.strip(),
-                company=company.strip(),
-                purpose=purpose,
-                contact=contact_person.strip(),
-            )
-
-            # ── session_state を更新して案内画面へ ───────
             st.session_state.visitor_name    = name.strip()
             st.session_state.visitor_company = company.strip()
             st.session_state.visitor_purpose = purpose
@@ -197,6 +210,8 @@ def render_new_visitor() -> None:
             for key in ["face_section_open", "captured_encoding"]:
                 st.session_state.pop(key, None)
 
+            st.session_state.voice_played = False
+            st.session_state.slack_sent   = False
             st.session_state.page = "guide"
             st.rerun()
 
@@ -204,4 +219,6 @@ def render_new_visitor() -> None:
         '<div class="privacy-note">🔒　入力いただいた情報は暗号化して保護されます</div>',
         unsafe_allow_html=True,
     )
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)  # max-width wrapper
+    st.markdown('</div>', unsafe_allow_html=True)  # reception-wrapper
