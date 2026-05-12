@@ -1,12 +1,35 @@
 """
 pages/scanning_cloud.py
 顔認証スキャン画面（クラウド・iPad対応版）
-Mac版scanning.pyのUIを踏襲
+Mac版と同じUX：ボタン押す→自動撮影→認証
 """
 
 import streamlit as st
 from components.header import render_header
 import numpy as np
+
+
+# Take Photoボタンを非表示にして自動クリックするJS
+AUTO_CAPTURE_JS = """
+<script>
+(function() {
+    function tryCapture() {
+        // Streamlitのカメラ入力ボタンを探して自動クリック
+        const btns = window.parent.document.querySelectorAll('button');
+        for (const btn of btns) {
+            if (btn.innerText && btn.innerText.includes('Take Photo')) {
+                btn.style.display = 'none'; // ボタンを非表示
+                setTimeout(() => btn.click(), 1500); // 1.5秒後に自動クリック
+                return;
+            }
+        }
+        // まだ見つからなければ再試行
+        setTimeout(tryCapture, 300);
+    }
+    tryCapture();
+})();
+</script>
+"""
 
 
 def render_scanning() -> None:
@@ -47,17 +70,20 @@ def render_scanning() -> None:
 
     else:
         st.markdown("""
-        <div style="text-align:center; padding: 40px 0 24px;">
-          <div style="font-size:64px; margin-bottom:20px;">📷</div>
-          <div style="font-size:24px; font-weight:300; color:#1a2533;
-                      letter-spacing:0.16em; margin-bottom:12px;">
-            顔認証で受付
+        <div style="text-align:center; padding: 40px 0 16px;">
+          <div style="font-size:64px; margin-bottom:20px;">🔍</div>
+          <div style="font-size:22px; font-weight:300; color:#1a2533;
+                      letter-spacing:0.16em; margin-bottom:8px;">
+            認証中です...
           </div>
           <div style="font-size:13px; color:#8fa3b8; letter-spacing:0.08em;">
-            カメラの正面に顔を向けてください
+            そのままお待ちください
           </div>
         </div>
         """, unsafe_allow_html=True)
+
+        # 自動撮影JS実行
+        st.components.v1.html(AUTO_CAPTURE_JS, height=0)
 
         img_file = st.camera_input("　", label_visibility="collapsed")
 
@@ -116,11 +142,12 @@ def render_scanning() -> None:
                                     st.session_state.page = "reception"
                                     st.rerun()
 
-                except Exception as e:
+                except Exception:
                     st.session_state.scan_triggered = False
                     st.session_state.page = "reception"
                     st.rerun()
 
+        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         col_l, col_c, col_r = st.columns([1, 2, 1])
         with col_c:
             if st.button("キャンセル", key="cancel_btn", use_container_width=True):
