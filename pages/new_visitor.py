@@ -8,16 +8,15 @@ SFC0003: 顔特徴量抽出（任意登録）
 
 import streamlit as st
 from components.header import render_header
+from components.notification import notify_walkin
 from components.db import save_visitor
-
+from components.face import capture_face_image, extract_encoding, save_face_encoding
 
 
 def render_new_visitor() -> None:
     st.markdown('<div class="reception-wrapper">', unsafe_allow_html=True)
 
     render_header()
-
-    st.markdown('<div style="max-width:680px; margin:0 auto; width:100%;">', unsafe_allow_html=True)
 
     if st.button("← 戻る", key="back_btn"):
         for key in ["face_section_open", "face_registered", "captured_encoding"]:
@@ -61,23 +60,22 @@ def render_new_visitor() -> None:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # ── 顔写真登録チェックボックス ───────────────────────────
+    # ── 顔写真登録エリア ────────────────────────────────────
     register_face = st.checkbox(
         "📷　顔写真を登録する（任意）　※次回から自動で受付できます",
         key="register_face_check",
     )
 
-    st.markdown('</div>', unsafe_allow_html=True)  # visitor-form-card
-
     if register_face:
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
+        # 撮影済みかどうかで表示を切り替える
         captured_encoding = st.session_state.get("captured_encoding", None)
 
         if captured_encoding is not None:
+            # ── 撮影成功済み ──────────────────────────────
             st.markdown("""
-            <div style="max-width:680px; margin:0 auto;
-                        background:rgba(232,248,240,0.9);
+            <div style="background:rgba(232,248,240,0.9);
                         border:1.5px solid rgba(74,165,107,0.3);
                         border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:32px; margin-bottom:8px;">✅</div>
@@ -99,9 +97,9 @@ def render_new_visitor() -> None:
                     st.rerun()
 
         else:
+            # ── 未撮影 ────────────────────────────────────
             st.markdown("""
-            <div style="max-width:680px; margin:0 auto;
-                        background:rgba(240,247,252,0.9);
+            <div style="background:rgba(240,247,252,0.9);
                         border:1.5px solid rgba(74,127,165,0.2);
                         border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:36px; margin-bottom:8px;">📸</div>
@@ -119,11 +117,11 @@ def render_new_visitor() -> None:
 
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
+            # ── 撮影ボタン ──────────────────────────────
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
                 if st.button("📷　カメラで撮影する", key="capture_btn", use_container_width=True):
                     with st.spinner("カメラで撮影中...　カメラの前に顔を向けてください"):
-                        from components.face import capture_face_image, extract_encoding, save_face_encoding
                         rgb_image = capture_face_image()
 
                     if rgb_image is None:
@@ -135,6 +133,8 @@ def render_new_visitor() -> None:
                         else:
                             st.session_state.captured_encoding = encoding
                             st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     error_placeholder = st.empty()
 
@@ -159,6 +159,7 @@ def render_new_visitor() -> None:
                 for e in errors:
                     st.error(e)
         else:
+            # ── DB登録 ──────────────────────────────────
             captured_encoding = st.session_state.get("captured_encoding", None)
             face_registered   = captured_encoding is not None
 
@@ -172,10 +173,19 @@ def render_new_visitor() -> None:
                 face_registered=face_registered,
             )
 
+            # ── 顔特徴量をDBに保存 ──────────────────────
             if face_registered and visitor_id:
-                from components.face import save_face_encoding
                 save_face_encoding(visitor_id, captured_encoding)
 
+            # ── Slack通知 ────────────────────────────────
+            notify_walkin(
+                name=name.strip(),
+                company=company.strip(),
+                purpose=purpose,
+                contact=contact_person.strip(),
+            )
+
+            # ── session_state を更新して案内画面へ ───────
             st.session_state.visitor_name    = name.strip()
             st.session_state.visitor_company = company.strip()
             st.session_state.visitor_purpose = purpose
@@ -187,8 +197,6 @@ def render_new_visitor() -> None:
             for key in ["face_section_open", "captured_encoding"]:
                 st.session_state.pop(key, None)
 
-            st.session_state.voice_played = False
-            st.session_state.slack_sent   = False
             st.session_state.page = "guide"
             st.rerun()
 
@@ -196,6 +204,4 @@ def render_new_visitor() -> None:
         '<div class="privacy-note">🔒　入力いただいた情報は暗号化して保護されます</div>',
         unsafe_allow_html=True,
     )
-
-    st.markdown('</div>', unsafe_allow_html=True)  # max-width wrapper
-    st.markdown('</div>', unsafe_allow_html=True)  # reception-wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
