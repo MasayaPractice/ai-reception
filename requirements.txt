@@ -2,7 +2,7 @@ streamlit==1.56.0
 requests
 numpy
 opencv-python-headless
-dlib==19.24.1
+https://github.com/z-mahmud22/Dlib_Windows_Python3.x/releases/download/v1.0.0/dlib-19.24.1-cp311-cp311-linux_x86_64.whl
 face-recognition
 pillow
 pandas
