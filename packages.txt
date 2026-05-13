@@ -1,3 +1,4 @@
 cmake
 libboost-python-dev
 libopenblas-dev
+python3-face-recognition
