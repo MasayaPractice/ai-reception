@@ -1,25 +1,17 @@
 """
 pages/new_visitor.py
 アポイントなし（飛び込み）入力フォーム
-SFC0006: 新規来訪者入力フォーム
-SFC0007: 来訪者情報DB登録
-SFC0003: 顔特徴量抽出（任意登録）
+クラウド・iPad対応版（deepface使用）
 
 【変更履歴】
-- クラウド・iPad対応：顔撮影を cv2.VideoCapture → st.camera_input に変更
-  （Mac版 capture_face_image() はクラウドでカメラアクセス不可のため）
-- face.py の import cv2 がクラウドでエラーになるため、
-  face関連のimportはすべて関数内の必要な箇所でのみ行う
-- 変更箇所は「# ▼ CLOUD」「# ▲ CLOUD」でマーク
-- それ以外は元のコードを一切変更していない
+- 顔撮影: cv2.VideoCapture → st.camera_input
+- 顔認証: face-recognition → deepface（components/face_cloud.py）
+- Mac版 new_visitor.py の機能・UIは完全に同じ
 """
 
 import streamlit as st
 from components.header import render_header
 from components.db import save_visitor
-# ▼ CLOUD: face.py は import cv2 をトップレベルで持つためここではimportしない
-#   → extract_encoding, save_face_encoding は関数内で必要な時だけimportする
-# ▲ CLOUD
 
 
 def render_new_visitor() -> None:
@@ -46,7 +38,6 @@ def render_new_visitor() -> None:
 
     st.markdown('<div class="visitor-form-card" style="margin-top:0;">', unsafe_allow_html=True)
 
-    # ── 入力フィールド ──────────────────────────────────────
     company = st.text_input(
         "会社名　／　Company",
         placeholder="例：株式会社〇〇",
@@ -71,13 +62,12 @@ def render_new_visitor() -> None:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
     st.markdown("---")
 
-    # ── 顔写真登録チェックボックス ───────────────────────────
     register_face = st.checkbox(
         "📷　顔写真を登録する（任意）　※次回から自動で受付できます",
         key="register_face_check",
     )
 
-    st.markdown('</div>', unsafe_allow_html=True)  # visitor-form-card
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if register_face:
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
@@ -129,7 +119,6 @@ def render_new_visitor() -> None:
 
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-            # ▼ CLOUD: st.camera_input で撮影（元コードの capture_face_image() はMac専用のため）
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
                 img_file = st.camera_input("📷　カメラで撮影する", key="face_camera")
@@ -137,27 +126,21 @@ def render_new_visitor() -> None:
             if img_file is not None:
                 with st.spinner("顔を認識しています..."):
                     try:
-                        import face_recognition
                         import numpy as np
                         from PIL import Image
-                        from components.face import extract_encoding
+                        from components.face_cloud import extract_encoding
 
                         pil_image = Image.open(img_file).convert("RGB")
                         rgb = np.array(pil_image)
-                        locations = face_recognition.face_locations(rgb)
+                        encoding = extract_encoding(rgb)
 
-                        if not locations:
+                        if encoding is None:
                             st.warning("顔が検出できませんでした。明るい場所でカメラの正面を向いて再度お試しください。")
                         else:
-                            encoding = extract_encoding(rgb)
-                            if encoding is None:
-                                st.warning("顔の特徴量を取得できませんでした。もう一度お試しください。")
-                            else:
-                                st.session_state.captured_encoding = encoding
-                                st.rerun()
+                            st.session_state.captured_encoding = encoding
+                            st.rerun()
                     except Exception as e:
                         st.error(f"カメラの処理中にエラーが発生しました：{e}")
-            # ▲ CLOUD
 
     error_placeholder = st.empty()
 
@@ -196,7 +179,7 @@ def render_new_visitor() -> None:
             )
 
             if face_registered and visitor_id:
-                from components.face import save_face_encoding
+                from components.face_cloud import save_face_encoding
                 save_face_encoding(visitor_id, captured_encoding)
 
             st.session_state.visitor_name    = name.strip()
@@ -220,5 +203,5 @@ def render_new_visitor() -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown('</div>', unsafe_allow_html=True)  # max-width wrapper
-    st.markdown('</div>', unsafe_allow_html=True)  # reception-wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)

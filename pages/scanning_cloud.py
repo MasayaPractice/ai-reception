@@ -2,6 +2,10 @@
 pages/scanning_cloud.py
 顔認証スキャン画面（クラウド・iPad対応版）
 Mac版と同じUX：ボタン押す→自動撮影→認証
+
+【変更履歴】
+- except Exception で即 reception に飛ばすのをやめ、エラー内容を表示して再試行できるように変更
+- それ以外は元のコードを一切変更していない
 """
 
 import streamlit as st
@@ -89,6 +93,7 @@ def render_scanning() -> None:
 
         if img_file is not None:
             with st.spinner("顔を認識しています..."):
+                # ▼ CLOUD: except で握りつぶさずエラーを画面表示して再試行できるように変更
                 try:
                     import face_recognition
                     from PIL import Image
@@ -142,10 +147,19 @@ def render_scanning() -> None:
                                     st.session_state.page = "reception"
                                     st.rerun()
 
-                except Exception:
+                except Exception as e:
+                    # ▼ 握りつぶしをやめてエラー内容を表示・再試行できるように
+                    st.error(f"エラーが発生しました：{e}")
                     st.session_state.scan_triggered = False
-                    st.session_state.page = "reception"
-                    st.rerun()
+                    col_l, col_c, col_r = st.columns([1, 2, 1])
+                    with col_c:
+                        if st.button("もう一度試す", key="retry_err_btn", use_container_width=True):
+                            st.session_state.scan_triggered = True
+                            st.rerun()
+                        if st.button("手動で受付する →", key="manual_err_btn", use_container_width=True):
+                            st.session_state.page = "reception"
+                            st.rerun()
+                # ▲ CLOUD
 
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         col_l, col_c, col_r = st.columns([1, 2, 1])

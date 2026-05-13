@@ -1,46 +1,57 @@
 """
 components/face_cloud.py
 クラウド・iPad対応版の顔認証コア処理
-st.camera_input() でiPadカメラを使用
+deepfaceを使用（dlibビルド不要）
+face.py（Mac版）とDB互換性なし（encodingの形式が異なる）
+
+【変更履歴】
+- face-recognition → deepface に変更（Streamlit Cloudでのdlibビルドエラーのため）
+- encoding形式: numpy float64配列（128次元）→ numpy float32配列（512次元, ArcFace）
+- Mac版face.pyとのDB互換性なし（将来の共有時は変換スクリプトが必要）
 """
-import cv2
-import face_recognition
+
 import numpy as np
 import sqlite3
 from pathlib import Path
-import streamlit as st
-from PIL import Image
-import io
 
 DB_PATH = Path("data/visitors.db")
-TOLERANCE = 0.45
+TOLERANCE = 0.6  # コサイン距離の閾値（低いほど厳格）
 
-def capture_face_image():
-    """
-    st.camera_input()でiPadカメラから撮影してRGB画像を返す。
-    ※ クラウド版：この関数はscanning.pyから直接呼ばず、
-       scanning_cloud.pyでst.camera_input()を使う。
-    """
-    pass
-
-def pil_to_rgb(pil_image) -> np.ndarray:
-    """PIL画像をRGB numpy配列に変換"""
-    return np.array(pil_image.convert("RGB"))
 
 def extract_encoding(rgb_image) -> np.ndarray | None:
-    locations = face_recognition.face_locations(rgb_image)
-    if not locations:
+    """
+    RGB画像から顔の特徴量を抽出して返す。
+    deepface + ArcFaceモデルを使用。
+    顔が検出できない場合は None を返す。
+    """
+    try:
+        from deepface import DeepFace
+        import cv2
+
+        # BGRに変換してからdeepfaceに渡す
+        bgr_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+
+        result = DeepFace.represent(
+            img_path=bgr_image,
+            model_name="ArcFace",
+            enforce_detection=True,
+            detector_backend="opencv",
+        )
+
+        if not result:
+            return None
+
+        encoding = np.array(result[0]["embedding"], dtype=np.float32)
+        return encoding
+
+    except Exception:
         return None
-    def face_area(loc):
-        top, right, bottom, left = loc
-        return (bottom - top) * (right - left)
-    largest = max(locations, key=face_area)
-    encodings = face_recognition.face_encodings(rgb_image, [largest])
-    if not encodings:
-        return None
-    return encodings[0]
+
 
 def save_face_encoding(visitor_id: int, encoding: np.ndarray) -> bool:
+    """
+    来訪者IDに紐づけて顔特徴量をDBに保存する。
+    """
     try:
         with sqlite3.connect(DB_PATH) as conn:
             conn.execute("""
@@ -53,38 +64,60 @@ def save_face_encoding(visitor_id: int, encoding: np.ndarray) -> bool:
     except Exception:
         return False
 
+
 def match_face(encoding: np.ndarray) -> dict | None:
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.row_factory = sqlite3.Row
-        rows = conn.execute("""
-            SELECT id, name, company, face_encoding
-            FROM visitors
-            WHERE face_registered = 1 AND face_encoding IS NOT NULL
-        """).fetchall()
+    """
+    特徴量をDBの全来訪者と照合し、一致する来訪者を返す。
+    コサイン類似度で照合。
+    """
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute("""
+                SELECT id, name, company, face_encoding
+                FROM visitors
+                WHERE face_registered = 1 AND face_encoding IS NOT NULL
+            """).fetchall()
 
-    if not rows:
+        if not rows:
+            return None
+
+        known_encodings = []
+        known_visitors = []
+
+        for row in rows:
+            try:
+                enc = np.frombuffer(row["face_encoding"], dtype=np.float32)
+                if enc.shape[0] == encoding.shape[0]:  # 同じ次元のみ照合
+                    known_encodings.append(enc)
+                    known_visitors.append(dict(row))
+            except Exception:
+                continue
+
+        if not known_encodings:
+            return None
+
+        # コサイン類似度で照合
+        best_score = -1
+        best_idx = -1
+
+        for i, known_enc in enumerate(known_encodings):
+            # コサイン類似度
+            dot = np.dot(encoding, known_enc)
+            norm = np.linalg.norm(encoding) * np.linalg.norm(known_enc)
+            if norm == 0:
+                continue
+            similarity = dot / norm
+
+            if similarity > best_score:
+                best_score = similarity
+                best_idx = i
+
+        # 閾値以上なら一致と判定
+        if best_score >= TOLERANCE and best_idx >= 0:
+            return known_visitors[best_idx]
+
         return None
 
-    known_encodings = []
-    known_visitors  = []
-    for row in rows:
-        try:
-            enc = np.frombuffer(row["face_encoding"], dtype=np.float64)
-            known_encodings.append(enc)
-            known_visitors.append(dict(row))
-        except Exception:
-            continue
-
-    if not known_encodings:
+    except Exception:
         return None
-
-    matches   = face_recognition.compare_faces(known_encodings, encoding, tolerance=TOLERANCE)
-    distances = face_recognition.face_distance(known_encodings, encoding)
-
-    if not any(matches):
-        return None
-
-    best_idx = int(np.argmin(distances))
-    if matches[best_idx]:
-        return known_visitors[best_idx]
-    return None
