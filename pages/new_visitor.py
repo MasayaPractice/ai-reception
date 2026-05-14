@@ -132,7 +132,7 @@ def render_new_visitor() -> None:
             # ▼ CLOUD: st.camera_input で撮影（元コードの capture_face_image() はMac専用のため）
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
-                img_file = st.camera_input("📷　カメラで撮影する", key="face_camera")
+                img_file = st.camera_input("📷　撮影する", key="face_camera")
 
             if img_file is not None:
                 with st.spinner("顔を認識しています..."):
