@@ -51,11 +51,11 @@ if page == "top":
     render_top()
 
 elif page == "scanning":
-    from pages.scanning_cloud import render_scanning
+    from cloud_pages.scanning_cloud import render_scanning
     render_scanning()
 
 elif page == "welcome_known":
-    from pages.welcome_known import render_welcome_known
+    from cloud_pages.welcome_known import render_welcome_known
     render_welcome_known()
 
 elif page == "reception":
@@ -67,7 +67,7 @@ elif page == "reception_appt":
     render_reception_appt()
 
 elif page == "new_visitor":
-    from pages.new_visitor import render_new_visitor
+    from cloud_pages.new_visitor import render_new_visitor
     render_new_visitor()
 
 elif page == "guide":
