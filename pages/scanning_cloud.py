@@ -1,11 +1,8 @@
 """
 pages/scanning_cloud.py
 顔認証スキャン画面（クラウド・iPad対応版）
-Mac版と同じUX：ボタン押す→自動撮影→認証
-
-【変更履歴】
-- except Exception で即 reception に飛ばすのをやめ、エラー内容を表示して再試行できるように変更
-- それ以外は元のコードを一切変更していない
+insightface使用・Web Speech APIで音声読み上げ
+Mac版 scanning.py と同じUX・UI
 """
 
 import streamlit as st
@@ -13,27 +10,45 @@ from components.header import render_header
 import numpy as np
 
 
-# Take Photoボタンを非表示にして自動クリックするJS
 AUTO_CAPTURE_JS = """
 <script>
 (function() {
     function tryCapture() {
-        // Streamlitのカメラ入力ボタンを探して自動クリック
         const btns = window.parent.document.querySelectorAll('button');
         for (const btn of btns) {
             if (btn.innerText && btn.innerText.includes('Take Photo')) {
-                btn.style.display = 'none'; // ボタンを非表示
-                setTimeout(() => btn.click(), 1500); // 1.5秒後に自動クリック
+                btn.style.display = 'none';
+                setTimeout(() => btn.click(), 1500);
                 return;
             }
         }
-        // まだ見つからなければ再試行
         setTimeout(tryCapture, 300);
     }
     tryCapture();
 })();
 </script>
 """
+
+
+def _speak(text: str) -> None:
+    """Web Speech APIで音声読み上げ（iPad・ブラウザ対応、Mac版osascriptの代替）"""
+    js = f"""
+    <script>
+    (function() {{
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        var msg = new SpeechSynthesisUtterance("{text}");
+        msg.lang = 'ja-JP';
+        msg.rate = 0.9;
+        msg.pitch = 1.0;
+        // iPad/iOSでは音声リストが遅延ロードされるため少し待つ
+        setTimeout(function() {{
+            window.speechSynthesis.speak(msg);
+        }}, 300);
+    }})();
+    </script>
+    """
+    st.components.v1.html(js, height=0)
 
 
 def render_scanning() -> None:
@@ -86,24 +101,23 @@ def render_scanning() -> None:
         </div>
         """, unsafe_allow_html=True)
 
-        # 自動撮影JS実行
         st.components.v1.html(AUTO_CAPTURE_JS, height=0)
-
         img_file = st.camera_input("　", label_visibility="collapsed")
 
         if img_file is not None:
             with st.spinner("顔を認識しています..."):
-                # ▼ CLOUD: except で握りつぶさずエラーを画面表示して再試行できるように変更
                 try:
-                    import face_recognition
                     from PIL import Image
+                    from components.face_cloud import extract_encoding, match_face
+                    from components.db import save_visitor
 
                     pil_image = Image.open(img_file).convert("RGB")
                     rgb = np.array(pil_image)
-                    locations = face_recognition.face_locations(rgb)
+                    enc = extract_encoding(rgb)
 
-                    if not locations:
+                    if enc is None:
                         st.warning("顔が検出できませんでした。明るい場所でカメラの正面を向いてください。")
+                        _speak("顔が検出できませんでした。もう一度お試しください。")
                         st.session_state.scan_triggered = False
                         col_l, col_c, col_r = st.columns([1, 2, 1])
                         with col_c:
@@ -114,10 +128,7 @@ def render_scanning() -> None:
                                 st.session_state.page = "reception"
                                 st.rerun()
                     else:
-                        from components.face import extract_encoding, match_face
-                        from components.db import save_visitor
-                        enc = extract_encoding(rgb)
-                        result = match_face(enc) if enc is not None else None
+                        result = match_face(enc)
 
                         if result:
                             save_visitor(
@@ -137,6 +148,7 @@ def render_scanning() -> None:
                             st.rerun()
                         else:
                             st.warning("申し訳ございません、顔認証できませんでした。手動にてご入力をお願いいたします。")
+                            _speak("申し訳ございません、顔認証できませんでした。手動にてご入力をお願いいたします。")
                             st.session_state.scan_triggered = False
                             col_l, col_c, col_r = st.columns([1, 2, 1])
                             with col_c:
@@ -148,7 +160,6 @@ def render_scanning() -> None:
                                     st.rerun()
 
                 except Exception as e:
-                    # ▼ 握りつぶしをやめてエラー内容を表示・再試行できるように
                     st.error(f"エラーが発生しました：{e}")
                     st.session_state.scan_triggered = False
                     col_l, col_c, col_r = st.columns([1, 2, 1])
@@ -159,7 +170,6 @@ def render_scanning() -> None:
                         if st.button("手動で受付する →", key="manual_err_btn", use_container_width=True):
                             st.session_state.page = "reception"
                             st.rerun()
-                # ▲ CLOUD
 
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         col_l, col_c, col_r = st.columns([1, 2, 1])
