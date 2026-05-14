@@ -1,32 +1,28 @@
 """
 pages/welcome_known.py
-再訪者ウェルカム画面（クラウド・iPad対応版）
-Web Speech APIで音声読み上げ（Mac版osascriptの代替）
+再訪者ウェルカム画面
+SFC0005: 再訪者ウェルカム表示
+SFC0009: 再訪者到着Slack通知
 """
 
 import streamlit as st
+import threading
 from components.header import render_header
 from components.notification import notify_appointment
 
 
 def _speak(text: str) -> None:
-    """Web Speech APIで音声読み上げ（iPad・ブラウザ対応）"""
-    js = f"""
-    <script>
-    (function() {{
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance("{text}");
-        msg.lang = 'ja-JP';
-        msg.rate = 0.9;
-        msg.pitch = 1.0;
-        setTimeout(function() {{
-            window.speechSynthesis.speak(msg);
-        }}, 300);
-    }})();
-    </script>
-    """
-    st.components.v1.html(js, height=0)
+    """音声読み上げ（別スレッドで実行）"""
+    def _run():
+        try:
+            import subprocess
+            subprocess.run(
+                ["osascript", "-e", f'say "{text}" using "Kyoko"'],
+                check=True, capture_output=True, text=True
+            )
+        except Exception as e:
+            print(f"[音声] エラー: {e}")
+    threading.Thread(target=_run, daemon=True).start()
 
 
 def render_welcome_known() -> None:
@@ -46,7 +42,7 @@ def render_welcome_known() -> None:
         )
         st.session_state.slack_sent = True
 
-    # ── 音声読み上げ（初回のみ）Web Speech API ───────────────
+    # ── 音声読み上げ（初回のみ） ─────────────────────────────
     if not st.session_state.get("voice_played", False):
         _speak(f"{visitor_name}様、お待ちしておりました。担当者がまいります。")
         st.session_state.voice_played = True
@@ -74,6 +70,7 @@ def render_welcome_known() -> None:
     </div>
     """, unsafe_allow_html=True)
 
+    # ── 仕切り線 ─────────────────────────────────────────────
     st.markdown("""
     <div style="display:flex; align-items:center; gap:10px;
                 width:200px; margin:0 auto 24px;">
@@ -88,6 +85,7 @@ def render_welcome_known() -> None:
     </div>
     """, unsafe_allow_html=True)
 
+    # ── 案内メッセージ ───────────────────────────────────────
     st.markdown("""
     <div style="background:rgba(255,255,255,0.92);
                 border:1px solid rgba(74,127,165,0.16);
@@ -104,6 +102,7 @@ def render_welcome_known() -> None:
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Slack通知済みバッジ ──────────────────────────────────
     st.markdown("""
     <div style="text-align:center; font-size:12px; color:#8fa3b8;
                 letter-spacing:0.08em; margin-bottom:24px;">
@@ -111,6 +110,7 @@ def render_welcome_known() -> None:
     </div>
     """, unsafe_allow_html=True)
 
+    # ── 本人ではない場合の導線 ───────────────────────────────
     st.markdown("""
     <div style="text-align:center; margin-bottom:12px;
                 font-size:12px; color:#8fa3b8;">
@@ -126,6 +126,7 @@ def render_welcome_known() -> None:
             st.session_state.page = "reception"
             st.rerun()
 
+    # ── トップに戻る ─────────────────────────────────────────
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     col_l2, col_c2, col_r2 = st.columns([1, 2, 1])
     with col_c2:
