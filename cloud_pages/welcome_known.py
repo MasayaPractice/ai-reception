@@ -14,19 +14,19 @@ def _speak(text: str) -> None:
     js = f"""
     <script>
     (function() {{
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance("{text}");
+        if (!window.parent.speechSynthesis) return;
+        window.parent.speechSynthesis.cancel();
+        var msg = new window.parent.SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
         msg.rate = 0.9;
         msg.pitch = 1.0;
         setTimeout(function() {{
-            window.speechSynthesis.speak(msg);
+            window.parent.speechSynthesis.speak(msg);
         }}, 300);
     }})();
     </script>
     """
-    st.components.v1.html(js, height=0)
+    st.markdown(js, unsafe_allow_html=True)
 
 
 def render_welcome_known() -> None:
