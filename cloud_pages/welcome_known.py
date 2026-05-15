@@ -18,7 +18,9 @@ def _speak(text: str) -> None:
         window.parent.speechSynthesis.cancel();
         var msg = new window.parent.SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
-        msg.voiceURI = 'O-Ren';
+        var voices = window.speechSynthesis.getVoices();
+        var jaFemale = voices.find(function(v) { return v.lang.startsWith('ja') && v.name.match(/female|woman|kyoko|haruka|o-ren/i); }) || voices.find(function(v) { return v.lang.startsWith('ja'); });
+        if (jaFemale) msg.voice = jaFemale;
         msg.rate = 0.9;
         msg.pitch = 1.0;
         setTimeout(function() {{
