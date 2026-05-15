@@ -18,6 +18,7 @@ def _speak(text: str) -> None:
         window.parent.speechSynthesis.cancel();
         var msg = new window.parent.SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
+        msg.voiceURI = 'O-Ren';
         msg.rate = 0.9;
         msg.pitch = 1.0;
         setTimeout(function() {{
@@ -26,7 +27,7 @@ def _speak(text: str) -> None:
     }})();
     </script>
     """
-    st.markdown(js, unsafe_allow_html=True)
+    st.components.v1.html(js, height=0)
 
 
 def render_welcome_known() -> None:

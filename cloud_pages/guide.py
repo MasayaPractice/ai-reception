@@ -28,6 +28,7 @@ def _speak(text: str) -> None:
         window.parent.speechSynthesis.cancel();
         var msg = new window.parent.SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
+        msg.voiceURI = 'O-Ren';
         msg.rate = 0.9;
         msg.pitch = 1.0;
         setTimeout(function() {{
@@ -36,7 +37,7 @@ def _speak(text: str) -> None:
     }})();
     </script>
     """
-    st.markdown(js, unsafe_allow_html=True)
+    st.components.v1.html(js, height=0)
 
 def _send_slack_notification(name: str, company: str, is_known: bool) -> None:
     """Slack通知 SFC0009 / SFC0010"""
