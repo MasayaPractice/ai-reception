@@ -71,7 +71,7 @@ elif page == "new_visitor":
     render_new_visitor()
 
 elif page == "guide":
-    from pages.guide import render_guide
+    from cloud_pages.guide import render_guide
     render_guide()
 
 elif page == "admin_login":
