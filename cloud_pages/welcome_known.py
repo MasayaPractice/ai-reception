@@ -1,7 +1,7 @@
 """
 cloud_pages/welcome_known.py
 再訪者ウェルカム画面（クラウド・iPad対応版）
-Web Speech APIで音声読み上げ
+Web Speech APIで音声読み上げ（女性音声優先）
 """
 
 import streamlit as st
@@ -10,22 +10,30 @@ from components.notification import notify_appointment
 
 
 def _speak(text: str) -> None:
-    """音声読み上げ（Web Speech API・iPad対応）"""
+    """音声読み上げ（Web Speech API・女性音声・iPad対応）"""
     js = f"""
     <script>
     (function() {{
-        if (!window.parent.speechSynthesis) return;
-        window.parent.speechSynthesis.cancel();
-        var msg = new window.parent.SpeechSynthesisUtterance("{text}");
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        var msg = new SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
-        var voices = window.speechSynthesis.getVoices();
-        var jaFemale = voices.find(function(v) { return v.lang.startsWith('ja') && v.name.match(/female|woman|kyoko|haruka|o-ren/i); }) || voices.find(function(v) { return v.lang.startsWith('ja'); });
-        if (jaFemale) msg.voice = jaFemale;
         msg.rate = 0.9;
-        msg.pitch = 1.0;
-        setTimeout(function() {{
-            window.parent.speechSynthesis.speak(msg);
-        }}, 300);
+        function speak() {{
+            var voices = window.speechSynthesis.getVoices();
+            var female = voices.find(function(v) {{
+                return v.lang.startsWith('ja') && v.localService === true;
+            }}) || voices.find(function(v) {{
+                return v.lang.startsWith('ja');
+            }});
+            if (female) msg.voice = female;
+            window.speechSynthesis.speak(msg);
+        }}
+        if (window.speechSynthesis.getVoices().length > 0) {{
+            speak();
+        }} else {{
+            window.speechSynthesis.onvoiceschanged = speak;
+        }}
     }})();
     </script>
     """

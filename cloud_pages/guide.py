@@ -1,7 +1,7 @@
 """
 cloud_pages/guide.py
 案内メッセージ画面（クラウド・iPad対応版）
-Web Speech APIで音声読み上げ
+Web Speech APIで音声読み上げ（女性音声優先）
 """
 
 import streamlit as st
@@ -18,7 +18,7 @@ GUIDE_MESSAGES = {
 
 
 def _speak(text: str) -> None:
-    """音声読み上げ（Web Speech API・iPad対応）"""
+    """音声読み上げ（Web Speech API・女性音声・iPad対応）"""
     js = f"""
     <script>
     (function() {{
@@ -27,9 +27,21 @@ def _speak(text: str) -> None:
         var msg = new SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
         msg.rate = 0.9;
-        setTimeout(function() {{
+        function speak() {{
+            var voices = window.speechSynthesis.getVoices();
+            var female = voices.find(function(v) {{
+                return v.lang.startsWith('ja') && v.localService === true;
+            }}) || voices.find(function(v) {{
+                return v.lang.startsWith('ja');
+            }});
+            if (female) msg.voice = female;
             window.speechSynthesis.speak(msg);
-        }}, 300);
+        }}
+        if (window.speechSynthesis.getVoices().length > 0) {{
+            speak();
+        }} else {{
+            window.speechSynthesis.onvoiceschanged = speak;
+        }}
     }})();
     </script>
     """
