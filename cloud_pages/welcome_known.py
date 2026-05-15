@@ -21,11 +21,9 @@ def _speak(text: str) -> None:
         msg.rate = 0.9;
         function speak() {{
             var voices = window.speechSynthesis.getVoices();
-            var female = voices.find(function(v) {{
-                return v.lang.startsWith('ja') && v.localService === true;
-            }}) || voices.find(function(v) {{
-                return v.lang.startsWith('ja');
-            }});
+            var female = voices.find(function(v) {{ return v.name === 'Kyoko'; }})
+                      || voices.find(function(v) {{ return v.name === 'O-Ren'; }})
+                      || voices.find(function(v) {{ return v.lang.startsWith('ja'); }});
             if (female) msg.voice = female;
             window.speechSynthesis.speak(msg);
         }}
