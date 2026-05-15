@@ -1,9 +1,7 @@
 """
-pages/guide.py
-案内メッセージ画面
-SFC0005: 再訪者ウェルカム表示
-SFC0008: 案内メッセージ表示
-SFC0009/0010: Slack通知
+cloud_pages/guide.py
+案内メッセージ画面（クラウド・iPad対応版）
+Web Speech APIで音声読み上げ
 """
 
 import streamlit as st
@@ -11,7 +9,6 @@ from components.header import render_header
 from components.notification import notify_walkin, notify_appointment
 
 
-# ── 案内メッセージ設定 ────────────────────────────────────────
 GUIDE_MESSAGES = {
     "default":   "担当者がまいります\nしばらくお待ちください",
     "meeting_a": "会議室A へお進みください\n右手の廊下を直進です",
@@ -19,30 +16,27 @@ GUIDE_MESSAGES = {
     "reception": "受付カウンターへお越しください",
 }
 
+
 def _speak(text: str) -> None:
     """音声読み上げ（Web Speech API・iPad対応）"""
     js = f"""
     <script>
     (function() {{
-        if (!window.parent.speechSynthesis) return;
-        window.parent.speechSynthesis.cancel();
-        var msg = new window.parent.SpeechSynthesisUtterance("{text}");
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        var msg = new SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
-        var voices = window.speechSynthesis.getVoices();
-        var jaFemale = voices.find(function(v) { return v.lang.startsWith('ja') && v.name.match(/female|woman|kyoko|haruka|o-ren/i); }) || voices.find(function(v) { return v.lang.startsWith('ja'); });
-        if (jaFemale) msg.voice = jaFemale;
         msg.rate = 0.9;
-        msg.pitch = 1.0;
         setTimeout(function() {{
-            window.parent.speechSynthesis.speak(msg);
+            window.speechSynthesis.speak(msg);
         }}, 300);
     }})();
     </script>
     """
     st.components.v1.html(js, height=0)
 
+
 def _send_slack_notification(name: str, company: str, is_known: bool) -> None:
-    """Slack通知 SFC0009 / SFC0010"""
     visit_type = st.session_state.get("visit_type", "walkin")
     contact    = st.session_state.get("contact_person", "")
     purpose    = st.session_state.get("visitor_purpose", "")
@@ -59,17 +53,14 @@ def render_guide() -> None:
 
     render_header()
 
-    # ── session_state から来訪者情報を取得 ──────────────────
     visitor_name    = st.session_state.get("visitor_name", "お客様")
     visitor_company = st.session_state.get("visitor_company", "")
     is_known        = st.session_state.get("is_known", False)
 
-    # ── Slack通知（初回表示時のみ） ───────────────────────────
     if not st.session_state.get("slack_sent", False):
         _send_slack_notification(visitor_name, visitor_company, is_known)
         st.session_state.slack_sent = True
 
-    # ── 音声読み上げ（初回表示時のみ） ───────────────────────
     if not st.session_state.get("voice_played", False):
         if is_known:
             voice_text = f"{visitor_name}様、お待ちしておりました。担当者がまいります。"
@@ -78,7 +69,6 @@ def render_guide() -> None:
         _speak(voice_text)
         st.session_state.voice_played = True
 
-    # ── ウェルカムメッセージ ─────────────────────────────────
     if is_known:
         welcome_html = f"""
         <div class="guide-welcome known">
@@ -99,7 +89,6 @@ def render_guide() -> None:
         """
     st.markdown(welcome_html, unsafe_allow_html=True)
 
-    # ── 案内メッセージカード ─────────────────────────────────
     guide_key = st.session_state.get("guide_destination", "default")
     guide_msg = GUIDE_MESSAGES.get(guide_key, GUIDE_MESSAGES["default"])
     lines     = guide_msg.split("\n")
@@ -112,7 +101,6 @@ def render_guide() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Slack通知済みバッジ ──────────────────────────────────
     st.markdown("""
     <div class="guide-notified">
       <span style="color:#4caf50;">●</span>
@@ -120,7 +108,6 @@ def render_guide() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── トップに戻るボタン ────────────────────────────────────
     st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
 
     col_l, col_c, col_r = st.columns([1, 3, 1])
