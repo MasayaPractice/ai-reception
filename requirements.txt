@@ -8,3 +8,4 @@ onnxruntime==1.26.0
 pillow==12.2.0
 pandas==3.0.2
 setuptools
+supabase
