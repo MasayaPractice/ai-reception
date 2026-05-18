@@ -40,6 +40,15 @@ for key, val in defaults.items():
 from components.db_cloud import init_db
 init_db()
 
+# buffalo_lモデルを起動時にダウンロード
+try:
+    from insightface.app import FaceAnalysis
+    _app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+    _app.prepare(ctx_id=0, det_size=(640, 640))
+    print("[insightface] buffalo_l モデル準備完了")
+except Exception as e:
+    print(f"[insightface] モデル準備エラー: {e}")
+
 # ▼ CLOUD: 起動時の一括importをやめて、ページ遷移時に個別importする
 #   理由: face.py が `import cv2` をトップレベルで持つため、
 #         起動時に全ページをimportするとクラウドでModuleNotFoundErrorが発生する
