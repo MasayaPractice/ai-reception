@@ -1,2 +1,5 @@
 [global]
 packageManager = "pip"
+
+[server]
+enableStaticServing = false
