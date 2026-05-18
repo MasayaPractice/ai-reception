@@ -16,7 +16,7 @@ SFC0003: 顔特徴量抽出（任意登録）
 
 import streamlit as st
 from components.header import render_header
-from components.db import save_visitor
+from components.db_cloud import save_visitor
 # ▼ CLOUD: face.py は import cv2 をトップレベルで持つためここではimportしない
 #   → extract_encoding, save_face_encoding は関数内で必要な時だけimportする
 # ▲ CLOUD

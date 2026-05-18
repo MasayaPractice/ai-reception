@@ -6,7 +6,7 @@ cloud_pages/new_visitor.py
 
 import streamlit as st
 from components.header import render_header
-from components.db import save_visitor
+from components.db_cloud import save_visitor
 
 
 def render_new_visitor() -> None:
