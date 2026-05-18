@@ -1,83 +1,52 @@
 """
 components/face_cloud.py
 クラウド・iPad対応版の顔認証コア処理
-deepfaceを使用（dlibビルド不要）
-face.py（Mac版）とDB互換性なし（encodingの形式が異なる）
-
-【変更履歴】
-- face-recognition → deepface に変更（Streamlit Cloudでのdlibビルドエラーのため）
-- encoding形式: numpy float64配列（128次元）→ numpy float32配列（512次元, ArcFace）
-- Mac版face.pyとのDB互換性なし（将来の共有時は変換スクリプトが必要）
+insightface buffalo_l使用・Supabase対応
 """
 
 import numpy as np
-import sqlite3
-from pathlib import Path
+import streamlit as st
 
-DB_PATH = Path("data/visitors.db")
-TOLERANCE = 0.6  # コサイン距離の閾値（低いほど厳格）
+THRESHOLD = 0.4
+
+
+@st.cache_resource
+def _get_app():
+    from insightface.app import FaceAnalysis
+    app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
+    app.prepare(ctx_id=0, det_size=(640, 640))
+    return app
 
 
 def extract_encoding(rgb_image) -> np.ndarray | None:
-    """
-    RGB画像から顔の特徴量を抽出して返す。
-    deepface + ArcFaceモデルを使用。
-    顔が検出できない場合は None を返す。
-    """
     try:
-        from deepface import DeepFace
         import cv2
-
-        # BGRに変換してからdeepfaceに渡す
-        bgr_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
-
-        result = DeepFace.represent(
-            img_path=bgr_image,
-            model_name="ArcFace",
-            enforce_detection=True,
-            detector_backend="opencv",
-        )
-
-        if not result:
+        app = _get_app()
+        bgr = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR)
+        faces = app.get(bgr)
+        if not faces:
             return None
-
-        encoding = np.array(result[0]["embedding"], dtype=np.float32)
-        return encoding
-
+        largest = max(faces, key=lambda f: (f.bbox[2]-f.bbox[0]) * (f.bbox[3]-f.bbox[1]))
+        return largest.embedding.astype(np.float32)
     except Exception:
         return None
 
 
 def save_face_encoding(visitor_id: int, encoding: np.ndarray) -> bool:
-    """
-    来訪者IDに紐づけて顔特徴量をDBに保存する。
-    """
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.execute("""
-                UPDATE visitors
-                SET face_encoding = ?, face_registered = 1
-                WHERE id = ?
-            """, (encoding.tobytes(), visitor_id))
-            conn.commit()
-        return True
-    except Exception:
+        from components.db_cloud import save_face_encoding as db_save
+        return db_save(visitor_id, encoding)
+    except Exception as e:
+        print(f"[face_cloud] save_face_encoding エラー: {e}")
         return False
 
 
 def match_face(encoding: np.ndarray) -> dict | None:
-    """
-    特徴量をDBの全来訪者と照合し、一致する来訪者を返す。
-    コサイン類似度で照合。
-    """
     try:
-        with sqlite3.connect(DB_PATH) as conn:
-            conn.row_factory = sqlite3.Row
-            rows = conn.execute("""
-                SELECT id, name, company, face_encoding
-                FROM visitors
-                WHERE face_registered = 1 AND face_encoding IS NOT NULL
-            """).fetchall()
+        import base64
+        from components.db_cloud import get_face_encodings_for_matching
+
+        rows = get_face_encodings_for_matching()
 
         if not rows:
             return None
@@ -87,37 +56,39 @@ def match_face(encoding: np.ndarray) -> dict | None:
 
         for row in rows:
             try:
-                enc = np.frombuffer(row["face_encoding"], dtype=np.float32)
-                if enc.shape[0] == encoding.shape[0]:  # 同じ次元のみ照合
+                enc_b64 = row.get("face_encoding")
+                if not enc_b64:
+                    continue
+                enc_bytes = base64.b64decode(enc_b64)
+                enc = np.frombuffer(enc_bytes, dtype=np.float32)
+                if enc.shape[0] == encoding.shape[0]:
                     known_encodings.append(enc)
-                    known_visitors.append(dict(row))
+                    known_visitors.append(row)
             except Exception:
                 continue
 
         if not known_encodings:
             return None
 
-        # コサイン類似度で照合
-        best_score = -1
+        best_dist = float("inf")
         best_idx = -1
 
         for i, known_enc in enumerate(known_encodings):
-            # コサイン類似度
-            dot = np.dot(encoding, known_enc)
-            norm = np.linalg.norm(encoding) * np.linalg.norm(known_enc)
-            if norm == 0:
+            norm_a = np.linalg.norm(encoding)
+            norm_b = np.linalg.norm(known_enc)
+            if norm_a == 0 or norm_b == 0:
                 continue
-            similarity = dot / norm
-
-            if similarity > best_score:
-                best_score = similarity
+            cosine_sim = np.dot(encoding, known_enc) / (norm_a * norm_b)
+            dist = 1 - cosine_sim
+            if dist < best_dist:
+                best_dist = dist
                 best_idx = i
 
-        # 閾値以上なら一致と判定
-        if best_score >= TOLERANCE and best_idx >= 0:
+        if best_dist <= THRESHOLD and best_idx >= 0:
             return known_visitors[best_idx]
 
         return None
 
-    except Exception:
+    except Exception as e:
+        print(f"[face_cloud] match_face エラー: {e}")
         return None
