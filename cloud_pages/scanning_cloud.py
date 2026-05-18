@@ -1,7 +1,7 @@
 """
 pages/scanning_cloud.py
 顔認証スキャン画面（クラウド・iPad対応版）
-insightface使用・Web Speech APIで音声読み上げ
+insightface使用・Web Speech APIで音声読み上げ（女性音声・Kyoko）
 Mac版 scanning.py と同じUX・UI
 """
 
@@ -31,7 +31,7 @@ AUTO_CAPTURE_JS = """
 
 
 def _speak(text: str) -> None:
-    """Web Speech APIで音声読み上げ（iPad・ブラウザ対応、Mac版osascriptの代替）"""
+    """音声読み上げ（Web Speech API・女性音声・iPad対応）"""
     js = f"""
     <script>
     (function() {{
@@ -40,11 +40,19 @@ def _speak(text: str) -> None:
         var msg = new SpeechSynthesisUtterance("{text}");
         msg.lang = 'ja-JP';
         msg.rate = 0.9;
-        msg.pitch = 1.0;
-        // iPad/iOSでは音声リストが遅延ロードされるため少し待つ
-        setTimeout(function() {{
+        function speak() {{
+            var voices = window.speechSynthesis.getVoices();
+            var female = voices.find(function(v) {{ return v.name === 'Kyoko'; }})
+                      || voices.find(function(v) {{ return v.name === 'O-Ren'; }})
+                      || voices.find(function(v) {{ return v.lang.startsWith('ja'); }});
+            if (female) msg.voice = female;
             window.speechSynthesis.speak(msg);
-        }}, 300);
+        }}
+        if (window.speechSynthesis.getVoices().length > 0) {{
+            speak();
+        }} else {{
+            window.speechSynthesis.onvoiceschanged = speak;
+        }}
     }})();
     </script>
     """
