@@ -15,7 +15,10 @@ import time
 import subprocess
 import threading
 from components.header import render_header
-from components.face import capture_face_image, extract_encoding, match_face
+try:
+    from components.face import capture_face_image, extract_encoding, match_face
+except ImportError:
+    pass
 # --- 追加: データベース保存用 ---
 from components.db import save_visitor 
 
