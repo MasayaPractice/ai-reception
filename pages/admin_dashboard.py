@@ -9,7 +9,7 @@ import streamlit as st
 import csv
 import io
 from components.header import render_header
-from components.db import get_all_visitors, get_visitors_by_month, delete_visitor
+from components.db_cloud import get_all_visitors, get_visitors_by_month, delete_visitor
 from datetime import datetime
 
 
