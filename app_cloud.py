@@ -37,7 +37,7 @@ for key, val in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = val
 
-from components.db import init_db
+from components.db_cloud import init_db
 init_db()
 
 # ▼ CLOUD: 起動時の一括importをやめて、ページ遷移時に個別importする
