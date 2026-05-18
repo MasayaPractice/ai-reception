@@ -109,7 +109,7 @@ def render_scanning() -> None:
                 try:
                     from PIL import Image
                     from components.face_cloud import extract_encoding, match_face
-                    from components.db import save_visitor
+                    from components.db_cloud import save_visitor
 
                     pil_image = Image.open(img_file).convert("RGB")
                     rgb = np.array(pil_image)
