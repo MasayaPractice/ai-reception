@@ -108,7 +108,7 @@ div[data-testid="stCameraInputButton"]::after {
 }
 </style>
 """, unsafe_allow_html=True)
-img_file = st.camera_input("", key="face_camera")
+                img_file = st.camera_input("", key="face_camera")
 
             if img_file is not None:
                 with st.spinner("顔を認識しています..."):
