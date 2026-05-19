@@ -91,8 +91,8 @@ def render_new_visitor() -> None:
             with col_c:
                 st.markdown("""
 <style>
-button[data-testid="stCameraInputButton"] span { display: none; }
-button[data-testid="stCameraInputButton"]::before { content: '📷　撮影する'; }
+button[data-testid="stCameraInputButton"] { color: transparent; }
+button[data-testid="stCameraInputButton"]::before { content: '📷　撮影する'; color: #e05c00; }
 </style>
 """, unsafe_allow_html=True)
                 img_file = st.camera_input("", key="face_camera")
