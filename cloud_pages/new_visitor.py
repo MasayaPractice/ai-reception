@@ -89,7 +89,26 @@ def render_new_visitor() -> None:
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
-                img_file = st.camera_input("📷　撮影する", key="face_camera")
+                st.markdown("""
+<style>
+div[data-testid="stCameraInputButton"] button {
+    visibility: hidden;
+}
+div[data-testid="stCameraInputButton"]::after {
+    content: '📷　撮影する';
+    visibility: visible;
+    display: block;
+    background-color: #4a9eda;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 16px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+}
+</style>
+""", unsafe_allow_html=True)
+img_file = st.camera_input("", key="face_camera")
 
             if img_file is not None:
                 with st.spinner("顔を認識しています..."):
