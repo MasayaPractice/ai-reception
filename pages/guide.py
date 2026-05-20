@@ -21,24 +21,20 @@ GUIDE_MESSAGES = {
 }
 
 def _speak(text: str) -> None:
-    import subprocess
-
-    def _run():
-        print(f"[音声] 開始: {text}")  # ← 追加
-        try:
-            result = subprocess.run(
-                ["osascript", "-e", f'say "{text}" using "Kyoko"'],
-                check=True,
-                capture_output=True,
-                text=True
-            )
-            print(f"[音声] 完了")  # ← 追加
-        except Exception as e:
-            print(f"[音声] エラー: {e}")
-
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
-    print(f"[音声] スレッド起動")  # ← 追加
+    """Web Speech APIで音声読み上げ（クラウド・iPad対応）"""
+    js = f"""
+    <script>
+    setTimeout(function() {{
+        var msg = new SpeechSynthesisUtterance('{text}');
+        msg.lang = 'ja-JP';
+        msg.rate = 0.9;
+        setTimeout(function() {{
+            window.speechSynthesis.speak(msg);
+        }}, 500);
+    }}, 100);
+    </script>
+    """
+    st.components.v1.html(js, height=0)
 
 def _send_slack_notification(name: str, company: str, is_known: bool) -> None:
     """Slack通知 SFC0009 / SFC0010"""

@@ -5,7 +5,7 @@ pages/reception_appt.py
 import streamlit as st
 from components.header import render_header
 from components.notification import notify_appointment
-from components.db import save_visitor
+from components.db_cloud import save_visitor
 
 
 def render_reception_appt() -> None:
