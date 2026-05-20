@@ -6,23 +6,25 @@ SFC0009: 再訪者到着Slack通知
 """
 
 import streamlit as st
-import threading
 from components.header import render_header
 from components.notification import notify_appointment
 
 
 def _speak(text: str) -> None:
-    """音声読み上げ（別スレッドで実行）"""
-    def _run():
-        try:
-            import subprocess
-            subprocess.run(
-                ["osascript", "-e", f'say "{text}" using "Kyoko"'],
-                check=True, capture_output=True, text=True
-            )
-        except Exception as e:
-            print(f"[音声] エラー: {e}")
-    threading.Thread(target=_run, daemon=True).start()
+    """Web Speech APIで音声読み上げ（クラウド・iPad対応）"""
+    js = f"""
+    <script>
+    setTimeout(function() {{
+        var msg = new SpeechSynthesisUtterance('{text}');
+        msg.lang = 'ja-JP';
+        msg.rate = 0.9;
+        setTimeout(function() {{
+            window.speechSynthesis.speak(msg);
+        }}, 500);
+    }}, 100);
+    </script>
+    """
+    st.components.v1.html(js, height=0)
 
 
 def render_welcome_known() -> None:
