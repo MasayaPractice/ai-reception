@@ -1,3 +1,6 @@
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap');
+
 /* ── ダークモード強制無効化（Windows Edge対応） ── */
 :root {
   color-scheme: light only;
@@ -32,9 +35,6 @@
     background-color: #000000 !important;
   }
 }
-
-/* ── Google Fonts ── */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap');
 
 /* ── リセット & ベース ── */
 [data-testid='stAppViewContainer'] {
