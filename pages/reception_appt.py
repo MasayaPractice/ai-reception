@@ -2,7 +2,7 @@
 pages/reception_appt.py
 アポイントあり — 来訪者確認フォーム
 【変更履歴】
-- 顔写真登録機能を追加（new_visitor.py と同じ見た目・仕様に統一）
+- 顔写真登録機能を追加（new_visitor.py をベースに最小限変更）
 """
 import streamlit as st
 from components.header import render_header
@@ -17,7 +17,8 @@ def render_reception_appt() -> None:
     st.markdown('<div style="max-width:680px; margin:0 auto; width:100%;">', unsafe_allow_html=True)
 
     if st.button("← 戻る", key="appt_back"):
-        st.session_state.pop("captured_encoding_appt", None)
+        for key in ["captured_encoding_appt"]:
+            st.session_state.pop(key, None)
         st.session_state.page = "reception"
         st.rerun()
 
@@ -56,14 +57,13 @@ def render_reception_appt() -> None:
         key="appt_register_face_check",
     )
     st.markdown("""
-    <div style="font-size:10px; color:#b0bec5; margin-top:2px; margin-left:28px; margin-bottom:4px;">
-      顔画像登録がまだのお客様はチェックをお願いします。登録不要の場合はそのまま「担当者に連絡する」を押してください。
+    <div style="font-size:10px; color:#b0bec5; margin-top:2px; padding-left:4px;">
+      顔画像登録がまだのお客様はチェックをお願いします
     </div>
     """, unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── 顔撮影セクション ────────────────────────────────────
     if register_face:
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
@@ -76,7 +76,8 @@ def render_reception_appt() -> None:
                         border:1.5px solid rgba(74,165,107,0.3);
                         border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:32px; margin-bottom:8px;">✅</div>
-              <div style="font-size:13px; font-weight:500; color:#1a5c35; letter-spacing:.1em;">
+              <div style="font-size:13px; font-weight:500; color:#1a5c35;
+                          letter-spacing:.1em;">
                 顔写真の登録が完了しました
               </div>
               <div style="font-size:10px; color:#5a9a6e; margin-top:6px;">
@@ -142,7 +143,11 @@ def render_reception_appt() -> None:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 3, 1])
     with col2:
-        submitted = st.button("担当者に連絡する", key="appt_submit_btn", use_container_width=True)
+        submitted = st.button(
+            "担当者に連絡する",
+            key="appt_submit_btn",
+            use_container_width=True,
+        )
 
     if submitted:
         if not name.strip():
@@ -171,7 +176,10 @@ def render_reception_appt() -> None:
             st.session_state.is_known        = True
             st.session_state.visit_type      = "appointment"
             st.session_state.face_registered = face_registered
-            st.session_state.pop("captured_encoding_appt", None)
+
+            for key in ["captured_encoding_appt"]:
+                st.session_state.pop(key, None)
+
             st.session_state.voice_played = False
             st.session_state.slack_sent   = False
             st.session_state.page = "guide"
