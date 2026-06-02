@@ -110,7 +110,9 @@ def render_reception_appt() -> None:
             </div>
             """, unsafe_allow_html=True)
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-            img_file = st.camera_input("📷　撮影する", key="appt_face_camera")
+            col_l, col_c, col_r = st.columns([1, 2, 1])
+            with col_c:
+                img_file = st.camera_input("📷　撮影する", key="appt_face_camera")
 
             if img_file is not None:
                 with st.spinner("顔を認識しています..."):
