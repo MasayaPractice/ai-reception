@@ -2,9 +2,8 @@
 pages/reception_appt.py
 アポイントあり — 来訪者確認フォーム
 【変更履歴】
-- 顔写真登録機能を追加（フォーム内チェックボックス方式）
-- チェックボックス説明文を上司要望に合わせて変更
-- 顔登録は任意である旨を明記
+- 顔写真登録機能を追加（new_visitor.py と同じ見た目・仕様に統一）
+- 説明文をカード内に収める
 """
 import streamlit as st
 from components.header import render_header
@@ -16,9 +15,10 @@ def render_reception_appt() -> None:
 
     render_header()
 
+    st.markdown('<div style="max-width:680px; margin:0 auto; width:100%;">', unsafe_allow_html=True)
+
     if st.button("← 戻る", key="appt_back"):
-        for key in ["captured_encoding_appt"]:
-            st.session_state.pop(key, None)
+        st.session_state.pop("captured_encoding_appt", None)
         st.session_state.page = "reception"
         st.rerun()
 
@@ -31,7 +31,7 @@ def render_reception_appt() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="visitor-form-card">', unsafe_allow_html=True)
+    st.markdown('<div class="visitor-form-card" style="margin-top:0;">', unsafe_allow_html=True)
 
     name = st.text_input(
         "お名前　／　Name",
@@ -52,21 +52,19 @@ def render_reception_appt() -> None:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
     st.markdown("---")
 
+    register_face = st.checkbox(
+        "📷　顔画像登録がまだのお客様はこちらをチェックして登録をお願いします（任意）　※次回から自動で受付できます",
+        key="appt_register_face_check",
+    )
     st.markdown("""
-    <div style="font-size:11px; color:#8fa3b8; line-height:1.8; margin-bottom:6px;">
-      📷　顔画像登録がまだのお客様はこちらをチェックして登録をお願いします。<br>
-      <span style="color:#b0bec5;">※ 任意です。登録を希望されない場合はそのまま「担当者に連絡する」を押してください。</span>
+    <div style="font-size:10px; color:#b0bec5; margin-top:2px; padding-left:4px;">
+      登録を希望されない場合はそのまま「担当者に連絡する」を押してください
     </div>
     """, unsafe_allow_html=True)
 
-    register_face = st.checkbox(
-        "顔写真を登録する（次回から自動で受付できます）",
-        key="appt_register_face_check",
-    )
-
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── 顔撮影セクション ────────────────────────────────────
+    # ── 顔撮影セクション（ウォークインと同じ見た目）───────────
     if register_face:
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
@@ -79,7 +77,8 @@ def render_reception_appt() -> None:
                         border:1.5px solid rgba(74,165,107,0.3);
                         border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:32px; margin-bottom:8px;">✅</div>
-              <div style="font-size:13px; font-weight:500; color:#1a5c35; letter-spacing:.1em;">
+              <div style="font-size:13px; font-weight:500; color:#1a5c35;
+                          letter-spacing:.1em;">
                 顔写真の登録が完了しました
               </div>
               <div style="font-size:10px; color:#5a9a6e; margin-top:6px;">
@@ -106,11 +105,13 @@ def render_reception_appt() -> None:
               </div>
               <div style="font-size:10px; color:#8fa3b8; letter-spacing:.07em;
                           line-height:1.8; margin-bottom:14px;">
+                登録しておくと次回から自動で受付できます<br>
                 顔写真は暗号化して保護されます 🔒
               </div>
             </div>
             """, unsafe_allow_html=True)
             st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
                 img_file = st.camera_input("📷　撮影する", key="appt_face_camera")
@@ -142,7 +143,7 @@ def render_reception_appt() -> None:
     error_placeholder = st.empty()
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 3, 1])
     with col2:
         submitted = st.button("担当者に連絡する", key="appt_submit_btn", use_container_width=True)
 
@@ -181,10 +182,10 @@ def render_reception_appt() -> None:
             st.session_state.page = "guide"
             st.rerun()
 
-    st.markdown("""
-    <div class="privacy-note">
-      🔒　入力いただいた情報は暗号化して保護されます
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="privacy-note">🔒　入力いただいた情報は暗号化して保護されます</div>',
+        unsafe_allow_html=True,
+    )
 
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
