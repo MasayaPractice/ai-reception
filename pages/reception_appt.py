@@ -2,7 +2,9 @@
 pages/reception_appt.py
 アポイントあり — 来訪者確認フォーム
 【変更履歴】
-- 顔写真登録機能を追加（new_visitor.py と同じフロー）
+- 顔写真登録機能を追加（フォーム内チェックボックス方式）
+- チェックボックス説明文を上司要望に合わせて変更
+- 顔登録は任意である旨を明記
 """
 import streamlit as st
 from components.header import render_header
@@ -15,7 +17,7 @@ def render_reception_appt() -> None:
     render_header()
 
     if st.button("← 戻る", key="appt_back"):
-        for key in ["appt_submitted", "appt_visitor_id", "captured_encoding_appt"]:
+        for key in ["captured_encoding_appt"]:
             st.session_state.pop(key, None)
         st.session_state.page = "reception"
         st.rerun()
@@ -29,79 +31,53 @@ def render_reception_appt() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    # ── フォーム未送信 ──────────────────────────────────────
-    if not st.session_state.get("appt_submitted", False):
+    st.markdown('<div class="visitor-form-card">', unsafe_allow_html=True)
 
-        st.markdown('<div class="visitor-form-card">', unsafe_allow_html=True)
+    name = st.text_input(
+        "お名前　／　Name",
+        placeholder="例：山田 太郎",
+        key="appt_name_input",
+    )
+    company = st.text_input(
+        "会社名　／　Company（任意）",
+        placeholder="例：株式会社〇〇",
+        key="appt_company_input",
+    )
+    contact_person = st.text_input(
+        "担当者名　／　Contact Person（任意）",
+        placeholder="例：鈴木",
+        key="appt_contact_input",
+    )
 
-        with st.form("appt_form", clear_on_submit=False):
-            name = st.text_input("お名前　／　Name", placeholder="例：山田 太郎", key="appt_name_input")
-            company = st.text_input("会社名　／　Company（任意）", placeholder="例：株式会社〇〇", key="appt_company_input")
-            contact_person = st.text_input("担当者名　／　Contact Person（任意）", placeholder="例：鈴木", key="appt_contact_input")
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+    st.markdown("---")
 
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                submitted = st.form_submit_button("次へ　→", use_container_width=True)
+    st.markdown("""
+    <div style="font-size:11px; color:#8fa3b8; line-height:1.8; margin-bottom:6px;">
+      📷　顔画像登録がまだのお客様はこちらをチェックして登録をお願いします。<br>
+      <span style="color:#b0bec5;">※ 任意です。登録を希望されない場合はそのまま「担当者に連絡する」を押してください。</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-            if submitted:
-                if not name.strip():
-                    st.error("お名前を入力してください")
-                else:
-                    st.session_state.visitor_name    = name.strip()
-                    st.session_state.visitor_company = company.strip()
-                    st.session_state.contact_person  = contact_person.strip()
-                    st.session_state.is_known        = True
-                    st.session_state.visit_type      = "appointment"
+    register_face = st.checkbox(
+        "顔写真を登録する（次回から自動で受付できます）",
+        key="appt_register_face_check",
+    )
 
-                    visitor_id = save_visitor(
-                        name=name.strip(),
-                        company=company.strip(),
-                        visit_type="appointment",
-                        contact_person=contact_person.strip(),
-                        is_known=True,
-                    )
-                    st.session_state.appt_visitor_id = visitor_id
-                    st.session_state.appt_submitted  = True
-                    st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # ── フォーム送信後：顔登録セクション ───────────────────
-    else:
-        visitor_name = st.session_state.get("visitor_name", "")
-
-        st.markdown(f"""
-        <div style="max-width:680px; margin:0 auto 16px;
-                    background:rgba(232,248,240,0.7);
-                    border:1.5px solid rgba(74,165,107,0.3);
-                    border-radius:16px; padding:16px 24px; text-align:center;">
-          <div style="font-size:13px; color:#1a5c35; font-weight:500;">
-            ✅　{visitor_name} 様、担当者に連絡しています
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown('<div class="visitor-form-card">', unsafe_allow_html=True)
-
-        st.markdown("""
-        <div style="text-align:center; margin-bottom:12px;">
-          <div style="font-size:14px; font-weight:600; color:#1a2533; letter-spacing:.05em;">
-            📷　顔写真の登録（任意）
-          </div>
-          <div style="font-size:11px; color:#8fa3b8; margin-top:4px;">
-            登録しておくと次回から自動で受付できます
-          </div>
-        </div>
-        """, unsafe_allow_html=True)
+    # ── 顔撮影セクション ────────────────────────────────────
+    if register_face:
+        st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
         captured_encoding = st.session_state.get("captured_encoding_appt", None)
 
         if captured_encoding is not None:
             st.markdown("""
-            <div style="background:rgba(232,248,240,0.9);
+            <div style="max-width:680px; margin:0 auto;
+                        background:rgba(232,248,240,0.9);
                         border:1.5px solid rgba(74,165,107,0.3);
-                        border-radius:16px; padding:20px; text-align:center; margin-bottom:12px;">
+                        border-radius:16px; padding:20px; text-align:center;">
               <div style="font-size:32px; margin-bottom:8px;">✅</div>
               <div style="font-size:13px; font-weight:500; color:#1a5c35; letter-spacing:.1em;">
                 顔写真の登録が完了しました
@@ -111,6 +87,7 @@ def render_reception_appt() -> None:
               </div>
             </div>
             """, unsafe_allow_html=True)
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
                 if st.button("撮り直す", key="appt_retake_btn", use_container_width=True):
@@ -118,16 +95,22 @@ def render_reception_appt() -> None:
                     st.rerun()
         else:
             st.markdown("""
-            <div style="background:rgba(240,247,252,0.9);
+            <div style="max-width:680px; margin:0 auto;
+                        background:rgba(240,247,252,0.9);
                         border:1.5px solid rgba(74,127,165,0.2);
-                        border-radius:16px; padding:16px; text-align:center; margin-bottom:12px;">
-              <div style="font-size:10px; color:#8fa3b8; letter-spacing:.07em; line-height:1.8;">
-                顔写真は暗号化して保護されます 🔒<br>
-                スキップして受付を完了することもできます
+                        border-radius:16px; padding:20px; text-align:center;">
+              <div style="font-size:36px; margin-bottom:8px;">📸</div>
+              <div style="font-size:13px; font-weight:500; color:#1a2533;
+                          letter-spacing:.1em; margin-bottom:4px;">
+                顔写真の撮影
+              </div>
+              <div style="font-size:10px; color:#8fa3b8; letter-spacing:.07em;
+                          line-height:1.8; margin-bottom:14px;">
+                顔写真は暗号化して保護されます 🔒
               </div>
             </div>
             """, unsafe_allow_html=True)
-
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
             col_l, col_c, col_r = st.columns([1, 2, 1])
             with col_c:
                 img_file = st.camera_input("📷　撮影する", key="appt_face_camera")
@@ -156,29 +139,47 @@ def render_reception_appt() -> None:
                     except Exception as e:
                         st.error(f"カメラの処理中にエラーが発生しました：{e}")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    error_placeholder = st.empty()
 
-        st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("担当者に連絡する", key="appt_complete_btn", use_container_width=True):
-                captured_encoding = st.session_state.get("captured_encoding_appt", None)
-                visitor_id = st.session_state.get("appt_visitor_id")
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        submitted = st.button("担当者に連絡する", key="appt_submit_btn", use_container_width=True)
 
-                if captured_encoding is not None and visitor_id:
-                    from components.face import save_face_encoding
-                    save_face_encoding(visitor_id, captured_encoding)
-                    st.session_state.face_registered = True
-                else:
-                    st.session_state.face_registered = False
+    if submitted:
+        if not name.strip():
+            with error_placeholder:
+                st.error("お名前を入力してください")
+        else:
+            captured_encoding = st.session_state.get("captured_encoding_appt", None)
+            face_registered   = captured_encoding is not None
 
-                for key in ["appt_submitted", "appt_visitor_id", "captured_encoding_appt"]:
-                    st.session_state.pop(key, None)
+            visitor_id = save_visitor(
+                name=name.strip(),
+                company=company.strip(),
+                visit_type="appointment",
+                contact_person=contact_person.strip(),
+                is_known=True,
+                face_registered=face_registered,
+            )
 
-                st.session_state.voice_played = False
-                st.session_state.slack_sent   = False
-                st.session_state.page = "guide"
-                st.rerun()
+            if face_registered and visitor_id:
+                from components.face import save_face_encoding
+                save_face_encoding(visitor_id, captured_encoding)
+
+            st.session_state.visitor_name    = name.strip()
+            st.session_state.visitor_company = company.strip()
+            st.session_state.contact_person  = contact_person.strip()
+            st.session_state.is_known        = True
+            st.session_state.visit_type      = "appointment"
+            st.session_state.face_registered = face_registered
+
+            st.session_state.pop("captured_encoding_appt", None)
+
+            st.session_state.voice_played = False
+            st.session_state.slack_sent   = False
+            st.session_state.page = "guide"
+            st.rerun()
 
     st.markdown("""
     <div class="privacy-note">
