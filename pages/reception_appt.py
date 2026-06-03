@@ -42,11 +42,7 @@ def render_reception_appt() -> None:
     st.markdown("---")
 
     register_face = st.checkbox("📷　顔写真を登録する（任意）　※次回から自動で受付できます", key="appt_register_face_check")
-    st.markdown("""
-    <div style="font-size:10px; color:#b0bec5; margin-top:2px; margin-left:28px;">
-      顔画像登録がまだのお客様はチェックをお願いします。登録不要の場合はそのまま「担当者に連絡する」を押してください。
-    </div>
-    """, unsafe_allow_html=True)
+    st.caption("顔画像登録がまだのお客様はチェックをお願いします。登録不要の場合はそのまま「担当者に連絡する」を押してください。")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
