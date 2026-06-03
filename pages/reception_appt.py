@@ -32,19 +32,19 @@ def render_reception_appt() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="visitor-form-card" style="margin-top:0;">', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="visitor-form-card" style="margin-top:0;">', unsafe_allow_html=True)
 
-    name = st.text_input("お名前　／　Name", placeholder="例：山田 太郎", key="appt_name_input")
-    company = st.text_input("会社名　／　Company（任意）", placeholder="例：株式会社〇〇", key="appt_company_input")
-    contact_person = st.text_input("担当者名　／　Contact Person（任意）", placeholder="例：鈴木", key="appt_contact_input")
+        name = st.text_input("お名前　／　Name", placeholder="例：山田 太郎", key="appt_name_input")
+        company = st.text_input("会社名　／　Company（任意）", placeholder="例：株式会社〇〇", key="appt_company_input")
+        contact_person = st.text_input("担当者名　／　Contact Person（任意）", placeholder="例：鈴木", key="appt_contact_input")
 
-    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-    st.markdown("---")
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        st.markdown("---")
 
-    register_face = st.checkbox("📷　顔写真を登録する（任意）　※次回から自動で受付できます", key="appt_register_face_check")
-    st.caption("顔画像登録がまだのお客様はチェックをお願いします。登録不要の場合はそのまま「担当者に連絡する」を押してください。")
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        register_face = st.checkbox("📷　顔写真を登録する（任意）　※次回から自動で受付できます", key="appt_register_face_check")
+        st.caption("顔画像登録がまだのお客様はチェックをお願いします。登録不要の場合はそのまま「担当者に連絡する」を押してください。")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     if register_face:
         st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
