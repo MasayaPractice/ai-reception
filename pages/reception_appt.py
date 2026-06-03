@@ -42,7 +42,10 @@ def render_reception_appt() -> None:
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
         st.markdown("---")
 
-        register_face = st.checkbox("📷　顔画像登録がまだのお客様はこちらをチェックして登録をお願いします（任意・次回から自動受付）", key="appt_register_face_check")
+        register_face = st.checkbox("📷　顔画像登録がまだのお客様はこちらをチェックして登録をお願いします", key="appt_register_face_check")
+        st.caption("※ 任意・次回から自動受付できます")
+        st.caption("※ 任意・次回から自動受付できます")
+        st.caption("※ 任意・次回から自動受付できます")
         st.markdown('</div>', unsafe_allow_html=True)
 
     if register_face:
