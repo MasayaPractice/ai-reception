@@ -41,7 +41,7 @@ def render_new_visitor() -> None:
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
     st.markdown("---")
 
-    register_face = st.checkbox("📷　顔写真を登録する（任意）　※次回から自動で受付できます", key="register_face_check")
+    register_face = st.checkbox("📷　顔画像登録がまだのお客様はこちらをチェックして登録をお願いします（任意・次回から自動受付）", key="register_face_check")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
