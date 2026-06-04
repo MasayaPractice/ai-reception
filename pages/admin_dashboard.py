@@ -9,7 +9,7 @@ import streamlit as st
 import csv
 import io
 from components.header import render_header
-from components.db_cloud import get_all_visitors, get_visitors_by_month, delete_visitor
+from components.db_cloud import get_all_visitors, get_visitors_by_month, delete_visitor, get_active_staff, add_staff, delete_staff
 from datetime import datetime
 
 
@@ -107,7 +107,7 @@ def render_admin_dashboard() -> None:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     # ── タブ ─────────────────────────────────────────────────
-    tab1, tab2, tab3 = st.tabs(["📅 本日", "📋 全来訪者", "📊 月別集計"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📅 本日", "📋 全来訪者", "📊 月別集計", "👥 担当者管理"])
 
     with tab1:
         _render_visitor_table(today_visitors, empty_msg="本日の来訪者はまだいません", tab="today")
@@ -117,6 +117,9 @@ def render_admin_dashboard() -> None:
 
     with tab3:
         _render_monthly_summary()
+
+    with tab4:
+        _render_staff_management()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -211,3 +214,40 @@ def _render_monthly_summary() -> None:
 
             st.caption(f"アポあり {appt_pct}%　／　飛び込み {100 - appt_pct}%")
             st.progress(appt_pct / 100)
+
+def _render_staff_management() -> None:
+    """担当者管理タブを描画する"""
+    st.markdown("### 担当者一覧")
+
+    staff_list = get_active_staff()
+
+    for s in staff_list:
+        with st.container(border=True):
+            col_name, col_slack, col_del = st.columns([2, 3, 1])
+            with col_name:
+                st.markdown(f"**{s['name']}**")
+            with col_slack:
+                st.caption(f"Slack ID: {s['slack_user_id'] or '未設定'}")
+            with col_del:
+                if s['name'] != '担当なし':
+                    if st.button("🗑️", key=f"del_staff_{s['id']}"):
+                        delete_staff(s['id'])
+                        st.rerun()
+
+    st.markdown("---")
+    st.markdown("### 担当者を追加")
+
+    with st.form("add_staff_form", clear_on_submit=True):
+        new_name = st.text_input("担当者名", placeholder="例：山田")
+        new_slack_id = st.text_input("Slack ユーザーID", placeholder="例：UXXXXXXXX")
+        submitted = st.form_submit_button("追加する")
+
+        if submitted:
+            if not new_name.strip():
+                st.error("担当者名を入力してください")
+            else:
+                if add_staff(new_name.strip(), new_slack_id.strip()):
+                    st.success(f"✅ {new_name} を追加しました")
+                    st.rerun()
+                else:
+                    st.error("追加に失敗しました")

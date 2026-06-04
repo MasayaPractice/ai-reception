@@ -6,7 +6,7 @@ Web Speech APIで音声読み上げ（女性音声優先）
 
 import streamlit as st
 from components.header import render_header
-from components.notification import notify_walkin, notify_appointment
+from components.notification import notify_walkin, notify_appointment, notify_with_staff
 
 
 GUIDE_MESSAGES = {
@@ -47,11 +47,17 @@ def _speak(text: str) -> None:
 
 
 def _send_slack_notification(name: str, company: str, is_known: bool) -> None:
-    visit_type = st.session_state.get("visit_type", "walkin")
-    contact    = st.session_state.get("contact_person", "")
-    purpose    = st.session_state.get("visitor_purpose", "")
+    visit_type    = st.session_state.get("visit_type", "walkin")
+    contact       = st.session_state.get("contact_person", "")
+    purpose       = st.session_state.get("visitor_purpose", "")
+    selected_staff = st.session_state.get("selected_staff", {})
 
-    if visit_type == "appointment":
+    if selected_staff:
+        notify_with_staff(
+            name=name, company=company, purpose=purpose,
+            visit_type=visit_type, staff=selected_staff,
+        )
+    elif visit_type == "appointment":
         notify_appointment(name=name, company=company, contact=contact)
     else:
         notify_walkin(name=name, company=company,
@@ -127,7 +133,7 @@ def render_guide() -> None:
             for key in ["visitor_name", "visitor_company", "is_known",
                         "slack_sent", "voice_played", "guide_destination",
                         "avatar_state", "visitor_purpose", "contact_person",
-                        "visit_type", "face_registered"]:
+                        "visit_type", "face_registered", "selected_staff"]:
                 st.session_state.pop(key, None)
             st.session_state.page = "top"
             st.rerun()

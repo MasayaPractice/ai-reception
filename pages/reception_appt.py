@@ -7,7 +7,7 @@ pages/reception_appt.py
 """
 import streamlit as st
 from components.header import render_header
-from components.db_cloud import save_visitor
+from components.db_cloud import save_visitor, get_active_staff
 
 
 def render_reception_appt() -> None:
@@ -37,7 +37,15 @@ def render_reception_appt() -> None:
 
         name = st.text_input("お名前　／　Name", placeholder="例：山田 太郎", key="appt_name_input")
         company = st.text_input("会社名　／　Company（任意）", placeholder="例：株式会社〇〇", key="appt_company_input")
-        contact_person = st.text_input("担当者名　／　Contact Person（任意）", placeholder="例：鈴木", key="appt_contact_input")
+        staff_list = get_active_staff()
+        staff_names = [s["name"] for s in staff_list]
+        selected_staff_name = st.selectbox(
+            "担当者　／　Contact Person",
+            staff_names,
+            key="appt_contact_input",
+        )
+        selected_staff = next((s for s in staff_list if s["name"] == selected_staff_name), {})
+        contact_person = selected_staff_name
 
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
         st.markdown("---")
@@ -169,6 +177,7 @@ button[data-testid="stCameraInputButton"]::before {
             for key in ["face_section_open", "captured_encoding_appt"]:
                 st.session_state.pop(key, None)
 
+            st.session_state.selected_staff   = selected_staff
             st.session_state.voice_played = False
             st.session_state.slack_sent   = False
             st.session_state.page = "guide"

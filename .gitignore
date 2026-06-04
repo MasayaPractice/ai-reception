@@ -5,3 +5,4 @@ __pycache__/
 data/
 visitors.db
 *.db
+.streamlit/secrets.toml
