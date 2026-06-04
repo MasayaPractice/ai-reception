@@ -127,3 +127,57 @@ def get_face_encodings_for_matching() -> list[dict]:
     except Exception as e:
         print(f"[DB] get_face_encodings エラー: {e}")
         return []
+
+
+def get_active_staff() -> list[dict]:
+    """有効な担当者一覧を取得する"""
+    try:
+        client = _get_client()
+        result = client.table("staff").select("*").eq(
+            "is_active", True
+        ).order("id").execute()
+        return result.data or []
+    except Exception as e:
+        print(f"[DB] get_active_staff エラー: {e}")
+        return []
+
+
+def add_staff(name: str, slack_user_id: str) -> bool:
+    """担当者を追加する"""
+    try:
+        client = _get_client()
+        client.table("staff").insert({
+            "name": name,
+            "slack_user_id": slack_user_id,
+            "is_active": True,
+        }).execute()
+        return True
+    except Exception as e:
+        print(f"[DB] add_staff エラー: {e}")
+        return False
+
+
+def update_staff(staff_id: int, name: str, slack_user_id: str, is_active: bool) -> bool:
+    """担当者情報を更新する"""
+    try:
+        client = _get_client()
+        client.table("staff").update({
+            "name": name,
+            "slack_user_id": slack_user_id,
+            "is_active": is_active,
+        }).eq("id", staff_id).execute()
+        return True
+    except Exception as e:
+        print(f"[DB] update_staff エラー: {e}")
+        return False
+
+
+def delete_staff(staff_id: int) -> bool:
+    """担当者を削除する"""
+    try:
+        client = _get_client()
+        client.table("staff").delete().eq("id", staff_id).execute()
+        return True
+    except Exception as e:
+        print(f"[DB] delete_staff エラー: {e}")
+        return False
