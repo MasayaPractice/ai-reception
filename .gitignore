@@ -6,3 +6,4 @@ data/
 visitors.db
 *.db
 .streamlit/secrets.toml
+cloud_pages/*.bak
