@@ -29,7 +29,7 @@ for key, val in defaults.items():
         st.session_state[key] = val
 
 # ── DB初期化 ──────────────────────────────────────────────────
-from components.db import init_db
+from components.db_cloud import init_db
 init_db()
 
 # ── ルーティング（管理者画面のみ） ───────────────────────────
