@@ -48,7 +48,7 @@ def render_avatar(state: str = "waiting") -> None:
         <div class="avatar-section">
           <div class="avatar-placeholder" style="display:flex;align-items:center;justify-content:center;">
             <img src="data:image/{ext};base64,{img_b64}"
-                 style="width:100%; height:100%; object-fit:cover; border-radius:50%;
+                 style="width:100%; height:100%; object-fit:cover; border-radius:50%; object-position:center 20%;
                         animation:floatY 5s ease-in-out infinite;" />
           </div>
         </div>
