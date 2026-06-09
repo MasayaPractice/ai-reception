@@ -38,7 +38,7 @@ def render_avatar(state: str = "waiting") -> None:
         st.markdown(f"""
         <div class="avatar-section">
           <div class="avatar-placeholder" style="display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;">
-            <video autoplay loop muted playsinline
+            <video autoplay muted playsinline
               style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;">
               <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
             </video>
