@@ -1,16 +1,17 @@
 """
 cloud_pages/welcome_known.py
 再訪者ウェルカム画面（クラウド・iPad対応版）
-Web Speech APIで音声読み上げ（女性音声優先）
+【変更履歴】
+- 担当者表示をselected_staffから取得するよう修正
+- notify_with_staffで担当者別DM通知に対応
 """
 
 import streamlit as st
 from components.header import render_header
-from components.notification import notify_appointment
+from components.notification import notify_with_staff, notify_appointment
 
 
 def _speak(text: str) -> None:
-    """音声読み上げ（Web Speech API・女性音声・iPad対応）"""
     js = f"""
     <script>
     (function() {{
@@ -45,13 +46,24 @@ def render_welcome_known() -> None:
 
     visitor_name    = st.session_state.get("visitor_name", "お客様")
     visitor_company = st.session_state.get("visitor_company", "")
+    selected_staff  = st.session_state.get("selected_staff", {})
+    staff_name      = selected_staff.get("name", "") if selected_staff else ""
 
     if not st.session_state.get("slack_sent", False):
-        notify_appointment(
-            name=visitor_name,
-            company=visitor_company,
-            contact="",
-        )
+        if selected_staff and selected_staff.get("id"):
+            notify_with_staff(
+                name=visitor_name,
+                company=visitor_company,
+                purpose="",
+                visit_type="appointment",
+                staff=selected_staff,
+            )
+        else:
+            notify_appointment(
+                name=visitor_name,
+                company=visitor_company,
+                contact="",
+            )
         st.session_state.slack_sent = True
 
     if not st.session_state.get("voice_played", False):
@@ -75,7 +87,7 @@ def render_welcome_known() -> None:
       </div>
       <div style="font-size:22px; color:#4a7fa5; letter-spacing:0.08em;
                   font-weight:400; margin-top:2px;">
-        {visitor_company}
+        {staff_name if staff_name else "担当なし"}
       </div>
     </div>
     """, unsafe_allow_html=True)
@@ -127,7 +139,8 @@ def render_welcome_known() -> None:
     col_l, col_c, col_r = st.columns([1, 2, 1])
     with col_c:
         if st.button("私ではありません", key="not_me_btn", use_container_width=True):
-            for key in ["visitor_name", "visitor_company", "is_known", "slack_sent"]:
+            for key in ["visitor_name", "visitor_company", "is_known",
+                        "slack_sent", "selected_staff"]:
                 st.session_state.pop(key, None)
             st.session_state.page = "reception"
             st.rerun()
@@ -137,7 +150,7 @@ def render_welcome_known() -> None:
     with col_c2:
         if st.button("トップ画面に戻る", key="top_btn", use_container_width=True):
             for key in ["visitor_name", "visitor_company", "is_known",
-                        "slack_sent", "voice_played", "scan_triggered"]:
+                        "slack_sent", "voice_played", "scan_triggered", "selected_staff"]:
                 st.session_state.pop(key, None)
             st.session_state.page = "top"
             st.rerun()
