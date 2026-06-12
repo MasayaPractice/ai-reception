@@ -2,7 +2,8 @@
 pages/scanning_cloud.py
 顔認証スキャン画面（クラウド・iPad対応版）
 insightface使用・Web Speech APIで音声読み上げ（女性音声・Kyoko）
-Mac版 scanning.py と同じUX・UI
+【変更履歴】
+- 顔認証前に担当者選択プルダウンを追加
 """
 
 import streamlit as st
@@ -31,7 +32,6 @@ AUTO_CAPTURE_JS = """
 
 
 def _speak(text: str) -> None:
-    """音声読み上げ（Web Speech API・女性音声・iPad対応）"""
     js = f"""
     <script>
     (function() {{
@@ -75,21 +75,42 @@ def render_scanning() -> None:
           </div>
           <div style="font-size:13px; color:#8fa3b8; letter-spacing:0.08em;
                       line-height:1.9;">
-            カメラの正面に顔を向けて<br>下のボタンを押してください
+            担当者を選択してから<br>カメラの正面に顔を向けてください
           </div>
         </div>
         """, unsafe_allow_html=True)
 
+        # ── 担当者選択プルダウン ──────────────────────────────
         col_l, col_c, col_r = st.columns([1, 2, 1])
         with col_c:
+            try:
+                from components.db_cloud import get_active_staff
+                staff_list = get_active_staff()
+            except Exception:
+                staff_list = []
+
+            staff_options = [{"id": None, "name": "担当なし", "slack_user_id": ""}] + staff_list
+            staff_names   = [s["name"] for s in staff_options]
+            selected_idx  = st.selectbox(
+                "担当者を選択してください",
+                range(len(staff_names)),
+                format_func=lambda i: staff_names[i],
+                key="scan_staff_idx",
+            )
+            st.session_state.selected_staff = staff_options[selected_idx]
+
+        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+        col_l2, col_c2, col_r2 = st.columns([1, 2, 1])
+        with col_c2:
             if st.button("📷　顔認証をはじめる", key="scan_btn", use_container_width=True):
                 st.session_state.scan_triggered = True
                 st.rerun()
 
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-        col_l2, col_c2, col_r2 = st.columns([1, 2, 1])
-        with col_c2:
+        col_l3, col_c3, col_r3 = st.columns([1, 2, 1])
+        with col_c3:
             if st.button("手動で受付する →", key="manual_btn", use_container_width=True):
                 st.session_state.scan_triggered = False
                 st.session_state.page = "reception"
@@ -139,11 +160,12 @@ def render_scanning() -> None:
                         result = match_face(enc)
 
                         if result:
+                            selected_staff = st.session_state.get("selected_staff", {})
                             save_visitor(
                                 name=result["name"],
                                 company=result["company"],
                                 visit_type="appointment",
-                                contact_person="",
+                                contact_person=selected_staff.get("name", ""),
                                 is_known=True,
                             )
                             st.session_state.visitor_name    = result["name"]
