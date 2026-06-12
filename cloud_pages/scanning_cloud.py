@@ -89,7 +89,8 @@ def render_scanning() -> None:
             except Exception:
                 staff_list = []
 
-            staff_options = [{"id": None, "name": "担当なし", "slack_user_id": ""}] + staff_list
+            staff_list_filtered = [s for s in staff_list if s["name"] != "担当なし"]
+            staff_options = [{"id": None, "name": "担当なし", "slack_user_id": ""}] + staff_list_filtered
             staff_names   = [s["name"] for s in staff_options]
             selected_idx  = st.selectbox(
                 "担当者を選択してください",
