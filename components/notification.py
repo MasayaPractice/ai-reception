@@ -51,7 +51,8 @@ def notify_appointment(name: str, company: str, contact: str) -> None:
 
 def _post_slack_to_user(slack_user_id: str, text: str) -> None:
     """特定のSlackユーザーにDMで通知する"""
-    token = os.getenv("SLACK_BOT_TOKEN")
+    import streamlit as st
+    token = os.getenv("SLACK_BOT_TOKEN") or st.secrets.get("SLACK_BOT_TOKEN", "")
     if not token:
         _post_slack(text)
         return
