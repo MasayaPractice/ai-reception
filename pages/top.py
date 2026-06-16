@@ -1,11 +1,8 @@
 """
 pages/top.py
 トップページ（待機画面）
-SFC0002: AIアバター状態切替
 【変更履歴】
-- 「はじめての方はこちら」ボタンを追加
-- D-ID口パク動画 + Web Speech API音声を追加
-- iOS/Mac両対応：自動再生 + タップフォールバック
+- iOS対応：iframe内documentとwindow両方にイベント登録
 """
 import streamlit as st
 from components.header import render_header
@@ -15,8 +12,6 @@ def _speak_welcome() -> None:
     js = """
     <script>
     (function() {
-        if (window._welcomeSpoken) return;
-
         function speakWelcome() {
             if (!window.speechSynthesis) return;
             if (window._welcomeSpoken) return;
@@ -40,17 +35,21 @@ def _speak_welcome() -> None:
             }
         }
 
-        // まず自動再生を試みる（Mac/Chromeで動く）
+        // Mac/Chrome: 自動再生
         speakWelcome();
 
-        // 自動再生がブロックされた場合、タップ/タッチで発火（iOS対応）
-        function onUserInteraction() {
+        // iOS: iframe内のdocumentとwindow両方にイベント登録
+        function onTouch() {
             speakWelcome();
-            window.parent.document.removeEventListener('click', onUserInteraction);
-            window.parent.document.removeEventListener('touchstart', onUserInteraction);
         }
-        window.parent.document.addEventListener('click', onUserInteraction);
-        window.parent.document.addEventListener('touchstart', onUserInteraction);
+        document.addEventListener('touchstart', onTouch, { once: true });
+        document.addEventListener('click', onTouch, { once: true });
+        window.addEventListener('touchstart', onTouch, { once: true });
+        window.addEventListener('click', onTouch, { once: true });
+        try {
+            window.parent.document.addEventListener('touchstart', onTouch, { once: true });
+            window.parent.document.addEventListener('click', onTouch, { once: true });
+        } catch(e) {}
     })();
     </script>
     """
