@@ -5,11 +5,40 @@ SFC0002: AIアバター状態切替
 【変更履歴】
 - 「はじめての方はこちら」ボタンを追加
 - D-ID口パク動画 + Web Speech API音声を追加
-- iOS対応：タップ時に音声発火するよう変更
 """
 import streamlit as st
 from components.header import render_header
 from components.avatar import render_avatar, render_status_badge
+
+def _speak_welcome() -> None:
+    """トップ画面の音声案内（Web Speech API）"""
+    js = """
+    <script>
+    (function() {
+        if (!window.speechSynthesis) return;
+        if (window._welcomeSpoken) return;
+        window._welcomeSpoken = true;
+        window.speechSynthesis.cancel();
+        var msg = new SpeechSynthesisUtterance("いらっしゃいませ。画面をタッチして受付をお始めください。");
+        msg.lang = 'ja-JP';
+        msg.rate = 0.9;
+        function speak() {
+            var voices = window.speechSynthesis.getVoices();
+            var female = voices.find(function(v) { return v.name === 'Kyoko'; })
+                      || voices.find(function(v) { return v.name === 'O-Ren'; })
+                      || voices.find(function(v) { return v.lang.startsWith('ja'); });
+            if (female) msg.voice = female;
+            window.speechSynthesis.speak(msg);
+        }
+        if (window.speechSynthesis.getVoices().length > 0) {
+            speak();
+        } else {
+            window.speechSynthesis.onvoiceschanged = speak;
+        }
+    })();
+    </script>
+    """
+    st.components.v1.html(js, height=0)
 
 def render_top() -> None:
     st.markdown('<div class="reception-wrapper">', unsafe_allow_html=True)
@@ -17,47 +46,7 @@ def render_top() -> None:
     render_status_badge(state="waiting")
     avatar_state = st.session_state.get("avatar_state", "waiting")
     render_avatar(state=avatar_state)
-
-    # iOS対応：画面タップ時に音声発火
-    st.components.v1.html("""
-    <script>
-    (function() {
-        function speakWelcome() {
-            if (!window.speechSynthesis) return;
-            if (window._welcomeSpoken) return;
-            window._welcomeSpoken = true;
-            window.speechSynthesis.cancel();
-            var msg = new SpeechSynthesisUtterance("いらっしゃいませ。画面をタッチして受付をお始めください。");
-            msg.lang = 'ja-JP';
-            msg.rate = 0.9;
-            function speak() {
-                var voices = window.speechSynthesis.getVoices();
-                var female = voices.find(function(v) { return v.name === 'Kyoko'; })
-                          || voices.find(function(v) { return v.name === 'O-Ren'; })
-                          || voices.find(function(v) { return v.lang.startsWith('ja'); });
-                if (female) msg.voice = female;
-                window.speechSynthesis.speak(msg);
-            }
-            if (window.speechSynthesis.getVoices().length > 0) {
-                speak();
-            } else {
-                window.speechSynthesis.onvoiceschanged = speak;
-            }
-        }
-        // 初回タップで音声発火
-        window.parent.document.addEventListener('click', function onFirstClick() {
-            speakWelcome();
-            document.removeEventListener('click', onFirstClick);
-        }, { once: true });
-        // 初回タッチでも発火（iPad対応）
-        window.parent.document.addEventListener('touchstart', function onFirstTouch() {
-            speakWelcome();
-            document.removeEventListener('touchstart', onFirstTouch);
-        }, { once: true });
-    })();
-    </script>
-    """, height=0)
-
+    _speak_welcome()
     st.markdown("""
     <div class="welcome-block">
       <div class="welcome-main">いらっしゃいませ</div>
@@ -72,7 +61,6 @@ def render_top() -> None:
       </div>
     </div>
     """, unsafe_allow_html=True)
-
     col_l, col_c, col_r = st.columns([1, 3, 1])
     with col_c:
         if st.button("📷　顔認証で受付する", key="start_btn", use_container_width=True):
@@ -83,7 +71,6 @@ def render_top() -> None:
         if st.button("👋　はじめての方はこちら", key="new_visitor_btn", use_container_width=True):
             st.session_state.page = "reception"
             st.rerun()
-
     st.markdown("""
     <div class="footer-hint">
       画面をタッチして開始
