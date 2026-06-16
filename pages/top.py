@@ -5,36 +5,52 @@ SFC0002: AIアバター状態切替
 【変更履歴】
 - 「はじめての方はこちら」ボタンを追加
 - D-ID口パク動画 + Web Speech API音声を追加
+- iOS/Mac両対応：自動再生 + タップフォールバック
 """
 import streamlit as st
 from components.header import render_header
 from components.avatar import render_avatar, render_status_badge
 
 def _speak_welcome() -> None:
-    """トップ画面の音声案内（Web Speech API）"""
     js = """
     <script>
     (function() {
-        if (!window.speechSynthesis) return;
         if (window._welcomeSpoken) return;
-        window._welcomeSpoken = true;
-        window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance("いらっしゃいませ。画面をタッチして受付をお始めください。");
-        msg.lang = 'ja-JP';
-        msg.rate = 0.9;
-        function speak() {
-            var voices = window.speechSynthesis.getVoices();
-            var female = voices.find(function(v) { return v.name === 'Kyoko'; })
-                      || voices.find(function(v) { return v.name === 'O-Ren'; })
-                      || voices.find(function(v) { return v.lang.startsWith('ja'); });
-            if (female) msg.voice = female;
-            window.speechSynthesis.speak(msg);
+
+        function speakWelcome() {
+            if (!window.speechSynthesis) return;
+            if (window._welcomeSpoken) return;
+            window._welcomeSpoken = true;
+            window.speechSynthesis.cancel();
+            var msg = new SpeechSynthesisUtterance("いらっしゃいませ。画面をタッチして受付をお始めください。");
+            msg.lang = 'ja-JP';
+            msg.rate = 0.9;
+            function speak() {
+                var voices = window.speechSynthesis.getVoices();
+                var female = voices.find(function(v) { return v.name === 'Kyoko'; })
+                          || voices.find(function(v) { return v.name === 'O-Ren'; })
+                          || voices.find(function(v) { return v.lang.startsWith('ja'); });
+                if (female) msg.voice = female;
+                window.speechSynthesis.speak(msg);
+            }
+            if (window.speechSynthesis.getVoices().length > 0) {
+                speak();
+            } else {
+                window.speechSynthesis.onvoiceschanged = speak;
+            }
         }
-        if (window.speechSynthesis.getVoices().length > 0) {
-            speak();
-        } else {
-            window.speechSynthesis.onvoiceschanged = speak;
+
+        // まず自動再生を試みる（Mac/Chromeで動く）
+        speakWelcome();
+
+        // 自動再生がブロックされた場合、タップ/タッチで発火（iOS対応）
+        function onUserInteraction() {
+            speakWelcome();
+            window.parent.document.removeEventListener('click', onUserInteraction);
+            window.parent.document.removeEventListener('touchstart', onUserInteraction);
         }
+        window.parent.document.addEventListener('click', onUserInteraction);
+        window.parent.document.addEventListener('touchstart', onUserInteraction);
     })();
     </script>
     """
