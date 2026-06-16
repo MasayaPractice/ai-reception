@@ -45,12 +45,12 @@ def render_top() -> None:
             }
         }
         // 初回タップで音声発火
-        document.addEventListener('click', function onFirstClick() {
+        window.parent.document.addEventListener('click', function onFirstClick() {
             speakWelcome();
             document.removeEventListener('click', onFirstClick);
         }, { once: true });
         // 初回タッチでも発火（iPad対応）
-        document.addEventListener('touchstart', function onFirstTouch() {
+        window.parent.document.addEventListener('touchstart', function onFirstTouch() {
             speakWelcome();
             document.removeEventListener('touchstart', onFirstTouch);
         }, { once: true });
