@@ -4,39 +4,27 @@ cloud_pages/welcome_known.py
 【変更履歴】
 - 担当者表示をselected_staffから取得するよう修正
 - notify_with_staffで担当者別DM通知に対応
+- iOS対応：Web Speech API→D-ID動画音声に変更
 """
 
 import streamlit as st
+import base64
+from pathlib import Path
 from components.header import render_header
 from components.notification import notify_with_staff, notify_appointment
 
 
-def _speak(text: str) -> None:
-    js = f"""
-    <script>
-    (function() {{
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance("{text}");
-        msg.lang = 'ja-JP';
-        msg.rate = 0.9;
-        function speak() {{
-            var voices = window.speechSynthesis.getVoices();
-            var female = voices.find(function(v) {{ return v.name === 'Kyoko'; }})
-                      || voices.find(function(v) {{ return v.name === 'O-Ren'; }})
-                      || voices.find(function(v) {{ return v.lang.startsWith('ja'); }});
-            if (female) msg.voice = female;
-            window.speechSynthesis.speak(msg);
-        }}
-        if (window.speechSynthesis.getVoices().length > 0) {{
-            speak();
-        }} else {{
-            window.speechSynthesis.onvoiceschanged = speak;
-        }}
-    }})();
-    </script>
-    """
-    st.components.v1.html(js, height=0)
+def _play_voice_video() -> None:
+    """D-ID動画で音声再生（お待ちしておりました。担当者がまいります。）"""
+    video_path = Path("assets/avatar_waiting.mp4")
+    if video_path.exists():
+        video_data = video_path.read_bytes()
+        video_b64  = base64.b64encode(video_data).decode()
+        st.markdown(f"""
+        <video autoplay playsinline style="display:none;">
+          <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+        </video>
+        """, unsafe_allow_html=True)
 
 
 def render_welcome_known() -> None:
@@ -67,7 +55,7 @@ def render_welcome_known() -> None:
         st.session_state.slack_sent = True
 
     if not st.session_state.get("voice_played", False):
-        _speak(f"{visitor_name}様、お待ちしておりました。担当者がまいります。")
+        _play_voice_video()
         st.session_state.voice_played = True
 
     st.markdown(f"""
