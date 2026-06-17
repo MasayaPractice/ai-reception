@@ -1,10 +1,12 @@
 """
 cloud_pages/guide.py
 案内メッセージ画面（クラウド・iPad対応版）
-Web Speech APIで音声読み上げ（女性音声優先）
+iOS対応：D-ID音声付き動画で読み上げ
 """
 
 import streamlit as st
+import base64
+from pathlib import Path
 from components.header import render_header
 from components.notification import notify_walkin, notify_appointment, notify_with_staff
 
@@ -16,34 +18,21 @@ GUIDE_MESSAGES = {
     "reception": "受付カウンターへお越しください",
 }
 
+VOICE_VIDEO_KNOWN = "assets/avatar_waiting.mp4"
+VOICE_VIDEO_NEW   = "assets/avatar_newvisitor.mp4"
 
-def _speak(text: str) -> None:
-    """音声読み上げ（Web Speech API・女性音声・iPad対応）"""
-    js = f"""
-    <script>
-    (function() {{
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance("{text}");
-        msg.lang = 'ja-JP';
-        msg.rate = 0.9;
-        function speak() {{
-            var voices = window.speechSynthesis.getVoices();
-            var female = voices.find(function(v) {{ return v.name === 'Kyoko'; }})
-                      || voices.find(function(v) {{ return v.name === 'O-Ren'; }})
-                      || voices.find(function(v) {{ return v.lang.startsWith('ja'); }});
-            if (female) msg.voice = female;
-            window.speechSynthesis.speak(msg);
-        }}
-        if (window.speechSynthesis.getVoices().length > 0) {{
-            speak();
-        }} else {{
-            window.speechSynthesis.onvoiceschanged = speak;
-        }}
-    }})();
-    </script>
-    """
-    st.components.v1.html(js, height=0)
+
+def _play_voice_video(video_path_str: str) -> None:
+    """D-ID音声付き動画を非表示で再生（音声のみ使用）"""
+    video_path = Path(video_path_str)
+    if video_path.exists():
+        video_data = video_path.read_bytes()
+        video_b64  = base64.b64encode(video_data).decode()
+        st.markdown(f"""
+        <video autoplay playsinline style="display:none;">
+          <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+        </video>
+        """, unsafe_allow_html=True)
 
 
 def _send_slack_notification(name: str, company: str, is_known: bool) -> None:
@@ -79,10 +68,9 @@ def render_guide() -> None:
 
     if not st.session_state.get("voice_played", False):
         if is_known:
-            voice_text = f"{visitor_name}様、お待ちしておりました。担当者がまいります。"
+            _play_voice_video(VOICE_VIDEO_KNOWN)
         else:
-            voice_text = "ありがとうございます。担当者にご連絡いたします。しばらくお待ちください。"
-        _speak(voice_text)
+            _play_voice_video(VOICE_VIDEO_NEW)
         st.session_state.voice_played = True
 
     if is_known:

@@ -32,31 +32,25 @@ AUTO_CAPTURE_JS = """
 
 
 def _speak(text: str) -> None:
-    js = f"""
-    <script>
-    (function() {{
-        if (!window.speechSynthesis) return;
-        window.speechSynthesis.cancel();
-        var msg = new SpeechSynthesisUtterance("{text}");
-        msg.lang = 'ja-JP';
-        msg.rate = 0.9;
-        function speak() {{
-            var voices = window.speechSynthesis.getVoices();
-            var female = voices.find(function(v) {{ return v.name === 'Kyoko'; }})
-                      || voices.find(function(v) {{ return v.name === 'O-Ren'; }})
-                      || voices.find(function(v) {{ return v.lang.startsWith('ja'); }});
-            if (female) msg.voice = female;
-            window.speechSynthesis.speak(msg);
-        }}
-        if (window.speechSynthesis.getVoices().length > 0) {{
-            speak();
-        }} else {{
-            window.speechSynthesis.onvoiceschanged = speak;
-        }}
-    }})();
-    </script>
-    """
-    st.components.v1.html(js, height=0)
+    """iOS対応：D-ID事前生成動画で音声再生（display:none）"""
+    import base64
+    from pathlib import Path
+    video_map = {
+        "顔が検出できませんでした。もう一度お試しください。": "assets/avatar_error_noface.mp4",
+        "申し訳ございません、顔認証できませんでした。手動にてご入力をお願いいたします。": "assets/avatar_error_noauth.mp4",
+    }
+    video_path_str = video_map.get(text)
+    if not video_path_str:
+        return
+    video_path = Path(video_path_str)
+    if video_path.exists():
+        video_data = video_path.read_bytes()
+        video_b64  = base64.b64encode(video_data).decode()
+        st.markdown(f"""
+        <video autoplay playsinline style="display:none;">
+          <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+        </video>
+        """, unsafe_allow_html=True)
 
 
 def render_scanning() -> None:

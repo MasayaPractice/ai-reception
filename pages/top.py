@@ -1,67 +1,60 @@
 """
 pages/top.py
 トップページ（待機画面）
+SFC0002: AIアバター状態切替
 【変更履歴】
-- iOS対応：iframe内documentとwindow両方にイベント登録
+- 「はじめての方はこちら」ボタンを追加
+- iOS対応：D-ID音声付き動画（最初の1回）→無音ループ動画に切り替え
 """
 import streamlit as st
+import base64
+from pathlib import Path
 from components.header import render_header
 from components.avatar import render_avatar, render_status_badge
 
-def _speak_welcome() -> None:
-    js = """
+WELCOME_VIDEO_PATH = "assets/avatar_top_welcome.mp4"
+
+def _render_welcome_video() -> None:
+    """初回案内：音声付き動画を1回だけ再生し、終了後に無音ループへ切り替え"""
+    video_path = Path(WELCOME_VIDEO_PATH)
+    if not video_path.exists():
+        return
+    video_data = video_path.read_bytes()
+    video_b64  = base64.b64encode(video_data).decode()
+    st.markdown(f"""
+    <div class="avatar-section">
+      <div class="avatar-placeholder" id="welcome-avatar-box"
+           style="display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:50%;">
+        <video id="welcome-video" autoplay playsinline
+          style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;">
+          <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+        </video>
+      </div>
+    </div>
     <script>
-    (function() {
-        function speakWelcome() {
-            if (!window.speechSynthesis) return;
-            if (window._welcomeSpoken) return;
-            window._welcomeSpoken = true;
-            window.speechSynthesis.cancel();
-            var msg = new SpeechSynthesisUtterance("いらっしゃいませ。画面をタッチして受付をお始めください。");
-            msg.lang = 'ja-JP';
-            msg.rate = 0.9;
-            function speak() {
-                var voices = window.speechSynthesis.getVoices();
-                var female = voices.find(function(v) { return v.name === 'Kyoko'; })
-                          || voices.find(function(v) { return v.name === 'O-Ren'; })
-                          || voices.find(function(v) { return v.lang.startsWith('ja'); });
-                if (female) msg.voice = female;
-                window.speechSynthesis.speak(msg);
-            }
-            if (window.speechSynthesis.getVoices().length > 0) {
-                speak();
-            } else {
-                window.speechSynthesis.onvoiceschanged = speak;
-            }
-        }
-
-        // Mac/Chrome: 自動再生
-        speakWelcome();
-
-        // iOS: iframe内のdocumentとwindow両方にイベント登録
-        function onTouch() {
-            speakWelcome();
-        }
-        document.addEventListener('touchstart', onTouch, { once: true });
-        document.addEventListener('click', onTouch, { once: true });
-        window.addEventListener('touchstart', onTouch, { once: true });
-        window.addEventListener('click', onTouch, { once: true });
-        try {
-            window.parent.document.addEventListener('touchstart', onTouch, { once: true });
-            window.parent.document.addEventListener('click', onTouch, { once: true });
-        } catch(e) {}
-    })();
+    (function() {{
+        var v = document.getElementById('welcome-video');
+        if (v) {{
+            v.addEventListener('ended', function() {{
+                window._topWelcomeDone = true;
+            }});
+        }}
+    }})();
     </script>
-    """
-    st.components.v1.html(js, height=0)
+    """, unsafe_allow_html=True)
 
 def render_top() -> None:
     st.markdown('<div class="reception-wrapper">', unsafe_allow_html=True)
     render_header()
     render_status_badge(state="waiting")
-    avatar_state = st.session_state.get("avatar_state", "waiting")
-    render_avatar(state=avatar_state)
-    _speak_welcome()
+
+    if not st.session_state.get("top_welcome_played", False):
+        _render_welcome_video()
+        st.session_state.top_welcome_played = True
+    else:
+        avatar_state = st.session_state.get("avatar_state", "waiting")
+        render_avatar(state=avatar_state)
+
     st.markdown("""
     <div class="welcome-block">
       <div class="welcome-main">いらっしゃいませ</div>
