@@ -33,6 +33,8 @@ def render_welcome_known() -> None:
     render_header()
 
     visitor_name    = st.session_state.get("visitor_name", "お客様")
+    visit_count     = st.session_state.get("visit_count", 1)
+    visit_count_text = f"{visit_count}回目のご来訪です" if visit_count >= 2 else ""
     visitor_company = st.session_state.get("visitor_company", "")
     selected_staff  = st.session_state.get("selected_staff", {})
     staff_name      = selected_staff.get("name", "") if selected_staff else ""
@@ -68,6 +70,9 @@ def render_welcome_known() -> None:
       <div style="font-size:36px; font-weight:300; color:#1a2533;
                   letter-spacing:0.16em; margin-bottom:8px;">
         {visitor_name} 様
+      </div>
+      <div style="font-size:12px; color:#8fa3b8; letter-spacing:0.1em; margin-bottom:8px;">
+        {visit_count_text}
       </div>
       <div style="font-size:11px; color:#b0bec5; letter-spacing:0.18em;
                   text-transform:uppercase; margin-top:10px;">

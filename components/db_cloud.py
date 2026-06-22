@@ -29,6 +29,7 @@ def save_visitor(
     is_known: bool = False,
     face_registered: bool = False,
     face_encoding: bytes = None,
+    person_id: str = None,
 ) -> int | None:
     """来訪者を保存してIDを返す"""
     try:
@@ -43,6 +44,8 @@ def save_visitor(
             "face_registered": face_registered,
             "visited_at": datetime.now().isoformat(),
         }
+        if person_id:
+            data["person_id"] = person_id
         result = client.table("visitors").insert(data).execute()
         if result.data:
             return result.data[0]["id"]
@@ -52,18 +55,20 @@ def save_visitor(
         return None
 
 
-def save_face_encoding(visitor_id: int, encoding) -> bool:
-    """顔特徴量をSupabaseに保存する"""
+def save_face_encoding(visitor_id: int, encoding, person_id: str = None) -> bool:
+    """顔特徴量をSupabaseに保存する（person_idも併せて保存）"""
     try:
         import base64
-        import numpy as np
+        import uuid
         client = _get_client()
-        # バイナリをbase64文字列に変換して保存
         enc_bytes = encoding.tobytes() if hasattr(encoding, 'tobytes') else encoding
         enc_b64 = base64.b64encode(enc_bytes).decode('utf-8')
+        if not person_id:
+            person_id = str(uuid.uuid4())
         client.table("visitors").update({
             "face_encoding": enc_b64,
             "face_registered": True,
+            "person_id": person_id,
         }).eq("id", visitor_id).execute()
         return True
     except Exception as e:
@@ -121,7 +126,7 @@ def get_face_encodings_for_matching() -> list[dict]:
     try:
         client = _get_client()
         result = client.table("visitors").select(
-            "id, name, company, face_encoding"
+            "id, name, company, face_encoding, person_id"
         ).eq("face_registered", True).execute()
         return result.data or []
     except Exception as e:
@@ -181,3 +186,18 @@ def delete_staff(staff_id: int) -> bool:
     except Exception as e:
         print(f"[DB] delete_staff エラー: {e}")
         return False
+
+
+def get_visit_count(person_id: str) -> int:
+    """person_idに紐づく来訪者の来訪回数を取得する（今回の来訪も含む）"""
+    if not person_id:
+        return 1
+    try:
+        client = _get_client()
+        result = client.table("visitors").select("id").eq(
+            "person_id", person_id
+        ).execute()
+        return len(result.data) if result.data else 1
+    except Exception as e:
+        print(f"[DB] get_visit_count エラー: {e}")
+        return 1

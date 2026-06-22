@@ -156,16 +156,22 @@ def render_scanning() -> None:
 
                         if result:
                             selected_staff = st.session_state.get("selected_staff", {})
+                            person_id = result.get("person_id")
                             save_visitor(
                                 name=result["name"],
                                 company=result["company"],
                                 visit_type="appointment",
                                 contact_person=selected_staff.get("name", ""),
                                 is_known=True,
+                                face_registered=True,
+                                person_id=person_id,
                             )
+                            from components.db_cloud import get_visit_count
+                            visit_count = get_visit_count(person_id)
                             st.session_state.visitor_name    = result["name"]
                             st.session_state.visitor_company = result["company"]
                             st.session_state.is_known        = True
+                            st.session_state.visit_count     = visit_count
                             st.session_state.scan_triggered  = False
                             st.session_state.voice_played    = False
                             st.session_state.slack_sent      = False
