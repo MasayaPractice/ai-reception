@@ -107,7 +107,7 @@ def render_admin_dashboard() -> None:
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
     # ── タブ ─────────────────────────────────────────────────
-    tab1, tab2, tab3, tab4 = st.tabs(["📅 本日", "📋 全来訪者", "📊 月別集計", "👥 担当者管理"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📅 本日", "📋 全来訪者", "📊 月別集計", "⭐ 常連客", "👥 担当者管理"])
 
     with tab1:
         _render_visitor_table(today_visitors, empty_msg="本日の来訪者はまだいません", tab="today")
@@ -119,9 +119,45 @@ def render_admin_dashboard() -> None:
         _render_monthly_summary()
 
     with tab4:
+        _render_repeat_visitors()
+    with tab5:
         _render_staff_management()
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+
+def _render_repeat_visitors() -> None:
+    """常連客一覧を表示する"""
+    from components.db_cloud import get_repeat_visitors
+
+    st.markdown(
+        "<div style='font-size:13px; color:#8fa3b8; margin-bottom:12px;'>"
+        "※2回以上ご来訪いただいた方を表示しています"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    repeat_visitors = get_repeat_visitors()
+
+    if not repeat_visitors:
+        st.info("常連のお客様はまだいません")
+        return
+
+    for v in repeat_visitors:
+        st.markdown(f"""
+        <div style="background:rgba(255,255,255,0.9); border:1px solid rgba(74,127,165,0.15);
+                    border-radius:12px; padding:14px 18px; margin-bottom:8px;
+                    display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:15px; font-weight:500; color:#1a2533;">{v['name']} 様</div>
+            <div style="font-size:12px; color:#8fa3b8;">{v['company']}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:18px; font-weight:600; color:#4a7fa5;">{v['visit_count']}回</div>
+            <div style="font-size:11px; color:#b0bec5;">最終来訪：{v['last_visited_at'][:10]}</div>
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
 def _render_visitor_table(visitors: list, empty_msg: str, tab: str) -> None:

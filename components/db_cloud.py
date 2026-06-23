@@ -201,3 +201,38 @@ def get_visit_count(person_id: str) -> int:
     except Exception as e:
         print(f"[DB] get_visit_count エラー: {e}")
         return 1
+
+
+def get_repeat_visitors() -> list[dict]:
+    """常連客一覧を取得する（person_idごとに来訪回数を集計、2回目以上の人のみ）"""
+    try:
+        client = _get_client()
+        result = client.table("visitors").select(
+            "name, company, person_id, visited_at"
+        ).not_.is_("person_id", "null").execute()
+
+        if not result.data:
+            return []
+
+        from collections import defaultdict
+        grouped = defaultdict(list)
+        for row in result.data:
+            grouped[row["person_id"]].append(row)
+
+        repeat_visitors = []
+        for person_id, rows in grouped.items():
+            if len(rows) >= 2:
+                rows_sorted = sorted(rows, key=lambda r: r["visited_at"], reverse=True)
+                latest = rows_sorted[0]
+                repeat_visitors.append({
+                    "name": latest["name"],
+                    "company": latest["company"],
+                    "visit_count": len(rows),
+                    "last_visited_at": latest["visited_at"],
+                })
+
+        repeat_visitors.sort(key=lambda x: x["visit_count"], reverse=True)
+        return repeat_visitors
+    except Exception as e:
+        print(f"[DB] get_repeat_visitors エラー: {e}")
+        return []
