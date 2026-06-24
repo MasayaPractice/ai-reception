@@ -139,6 +139,8 @@ def _render_repeat_visitors() -> None:
 
     repeat_visitors = get_repeat_visitors()
 
+    st.write(f"DEBUG: repeat_visitors = {repeat_visitors}")
+
     if not repeat_visitors:
         st.info("常連のお客様はまだいません")
         return
