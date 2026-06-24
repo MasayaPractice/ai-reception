@@ -209,7 +209,7 @@ def get_repeat_visitors() -> list[dict]:
         client = _get_client()
         result = client.table("visitors").select(
             "name, company, person_id, visited_at"
-        ).not_.is_("person_id", "null").execute()
+        ).execute()
 
         if not result.data:
             return []
@@ -217,7 +217,9 @@ def get_repeat_visitors() -> list[dict]:
         from collections import defaultdict
         grouped = defaultdict(list)
         for row in result.data:
-            grouped[row["person_id"]].append(row)
+            pid = row.get("person_id")
+            if pid:
+                grouped[pid].append(row)
 
         repeat_visitors = []
         for person_id, rows in grouped.items():
