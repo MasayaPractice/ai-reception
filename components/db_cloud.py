@@ -4,6 +4,7 @@ components/db_cloud.py
 Mac版のdb.py（SQLite）とは別ファイル。Mac版は一切変更しない。
 """
 import os
+import streamlit as st
 from datetime import datetime
 
 
@@ -207,9 +208,11 @@ def get_repeat_visitors() -> list[dict]:
     """常連客一覧を取得する（person_idごとに来訪回数を集計、2回目以上の人のみ）"""
     try:
         client = _get_client()
-        result = client.table("visitors").select(
-            "name, company, person_id, visited_at"
-        ).execute()
+        result = client.table("visitors").select("*").execute()
+
+        st.write(f"DEBUG raw count: {len(result.data) if result.data else 0}")
+        if result.data:
+            st.write(f"DEBUG sample row: {result.data[0]}")
 
         if not result.data:
             return []
