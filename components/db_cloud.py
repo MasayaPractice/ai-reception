@@ -208,15 +208,12 @@ def get_repeat_visitors() -> list[dict]:
     """常連客一覧を取得する（person_idごとに来訪回数を集計、2回目以上の人のみ）"""
     try:
         client = _get_client()
-        result = client.table("visitors").select("*").execute()
+        result = client.table("visitors").select(
+            "name, company, person_id, visited_at"
+        ).execute()
 
         if not result.data:
             return []
-
-        has_person_id = [r for r in result.data if r.get("person_id")]
-        st.write(f"DEBUG rows with person_id: {len(has_person_id)}")
-        if has_person_id:
-            st.write(f"DEBUG first such row: {has_person_id[0]}")
 
         from collections import defaultdict
         grouped = defaultdict(list)
