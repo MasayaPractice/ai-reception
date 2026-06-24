@@ -210,12 +210,11 @@ def get_repeat_visitors() -> list[dict]:
         client = _get_client()
         result = client.table("visitors").select("*").execute()
 
-        st.write(f"DEBUG raw count: {len(result.data) if result.data else 0}")
-        if result.data:
-            st.write(f"DEBUG sample row: {result.data[0]}")
-
         if not result.data:
             return []
+
+        masaya_rows = [r for r in result.data if r.get("name") == "K Masaya"]
+        st.write(f"DEBUG K Masaya rows: {masaya_rows}")
 
         from collections import defaultdict
         grouped = defaultdict(list)
