@@ -213,8 +213,10 @@ def get_repeat_visitors() -> list[dict]:
         if not result.data:
             return []
 
-        masaya_rows = [r for r in result.data if r.get("name") == "K Masaya"]
-        st.write(f"DEBUG K Masaya rows: {masaya_rows}")
+        has_person_id = [r for r in result.data if r.get("person_id")]
+        st.write(f"DEBUG rows with person_id: {len(has_person_id)}")
+        if has_person_id:
+            st.write(f"DEBUG first such row: {has_person_id[0]}")
 
         from collections import defaultdict
         grouped = defaultdict(list)
