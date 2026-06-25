@@ -171,7 +171,11 @@ def _render_visitor_table(visitors: list, empty_msg: str, tab: str) -> None:
             col_name, col_badges = st.columns([3, 2])
 
             with col_name:
-                st.markdown(f"**{v['name']} 様**")
+                name_kana = v.get('name_kana', '') or ''
+                if name_kana:
+                    st.markdown(f"**{v['name']} 様**　<span style='font-size:11px;color:#8fa3b8;'>（{name_kana}）</span>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"**{v['name']} 様**")
 
             with col_badges:
                 if v["visit_type"] == "appointment":
