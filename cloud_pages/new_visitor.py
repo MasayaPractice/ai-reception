@@ -35,6 +35,7 @@ def render_new_visitor() -> None:
 
     company = st.text_input("会社名　／　Company", placeholder="例：株式会社〇〇", key="company_input")
     name = st.text_input("お名前　／　Name", placeholder="例：山田 太郎", key="name_input")
+    name_kana = st.text_input("フリガナ　／　Furigana", placeholder="例：ヤマダ タロウ", key="name_kana_input")
     purpose = st.selectbox("ご用件　／　Purpose", ["営業・提案", "納品・引き取り", "求人・採用関連", "その他"], key="purpose_input")
     contact_person = st.text_input("担当者名（わかる場合）　／　Contact Person", placeholder="例：鈴木（不明な場合は空欄）", key="contact_input")
 
@@ -155,6 +156,7 @@ button[data-testid="stCameraInputButton"]::before {
                 name=name.strip(), company=company.strip(), visit_type="walkin",
                 purpose=purpose, contact_person=contact_person.strip(),
                 is_known=False, face_registered=face_registered,
+                name_kana=name_kana.strip(),
             )
             if face_registered and visitor_id:
                 from components.face_cloud import save_face_encoding

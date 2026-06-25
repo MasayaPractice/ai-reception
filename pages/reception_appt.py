@@ -36,6 +36,7 @@ def render_reception_appt() -> None:
         st.markdown('<div class="visitor-form-card" style="margin-top:0;">', unsafe_allow_html=True)
 
         name = st.text_input("お名前　／　Name", placeholder="例：山田 太郎", key="appt_name_input")
+        name_kana = st.text_input("フリガナ　／　Furigana", placeholder="例：ヤマダ タロウ", key="appt_name_kana_input")
         company = st.text_input("会社名　／　Company（任意）", placeholder="例：株式会社〇〇", key="appt_company_input")
         staff_list = get_active_staff()
         staff_names = [s["name"] for s in staff_list]
@@ -161,6 +162,7 @@ button[data-testid="stCameraInputButton"]::before {
                 name=name.strip(), company=company.strip(),
                 visit_type="appointment", contact_person=contact_person.strip(),
                 is_known=True, face_registered=face_registered,
+                name_kana=name_kana.strip(),
             )
 
             if face_registered and visitor_id:

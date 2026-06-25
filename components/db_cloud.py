@@ -31,6 +31,7 @@ def save_visitor(
     face_registered: bool = False,
     face_encoding: bytes = None,
     person_id: str = None,
+    name_kana: str = "",
 ) -> int | None:
     """来訪者を保存してIDを返す"""
     try:
@@ -47,6 +48,8 @@ def save_visitor(
         }
         if person_id:
             data["person_id"] = person_id
+        if name_kana:
+            data["name_kana"] = name_kana
         result = client.table("visitors").insert(data).execute()
         if result.data:
             return result.data[0]["id"]
