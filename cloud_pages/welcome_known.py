@@ -100,17 +100,9 @@ def render_welcome_known() -> None:
     """, unsafe_allow_html=True)
 
     from components.weather import get_weather
-    from datetime import datetime
+    from components.greeting import generate_greeting_message
     weather = get_weather()
-    today_str = datetime.now().strftime("%Y年%m月%d日")
-    weather_html = ""
-    if weather.get("emoji"):
-        weather_html = f"""
-        <div style="text-align:center; font-size:13px; color:#8fa3b8;
-                    margin-top:10px; margin-bottom:16px;">
-          {weather["emoji"]} 本日（{today_str}）の東京の天気：{weather["text"]}
-        </div>
-        """
+    greeting_text = generate_greeting_message(visit_count, weather)
 
     st.markdown(f"""
     <div style="background:rgba(255,255,255,0.92);
@@ -120,16 +112,13 @@ def render_welcome_known() -> None:
       <div style="font-size:28px; margin-bottom:12px;">🗺️</div>
       <div style="font-size:18px; font-weight:400; color:#1a2533;
                   letter-spacing:0.1em; line-height:1.7;">
-        お待ちしておりました<br>担当者がまいります
+        {greeting_text}<br>担当者がまいります
       </div>
       <div style="font-size:12px; color:#8fa3b8; margin-top:10px;">
         そのままお待ちください
       </div>
     </div>
     """, unsafe_allow_html=True)
-
-    if weather_html:
-        st.markdown(weather_html, unsafe_allow_html=True)
 
     st.markdown("""
     <div style="text-align:center; font-size:12px; color:#8fa3b8;
