@@ -99,7 +99,20 @@ def render_welcome_known() -> None:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("""
+    from components.weather import get_weather
+    from datetime import datetime
+    weather = get_weather()
+    today_str = datetime.now().strftime("%Y年%m月%d日")
+    weather_html = ""
+    if weather.get("emoji"):
+        weather_html = f"""
+        <div style="text-align:center; font-size:13px; color:#8fa3b8;
+                    margin-top:10px; margin-bottom:16px;">
+          {weather["emoji"]} 本日（{today_str}）の東京の天気：{weather["text"]}
+        </div>
+        """
+
+    st.markdown(f"""
     <div style="background:rgba(255,255,255,0.92);
                 border:1px solid rgba(74,127,165,0.16);
                 border-radius:20px; padding:28px 24px;
@@ -114,6 +127,9 @@ def render_welcome_known() -> None:
       </div>
     </div>
     """, unsafe_allow_html=True)
+
+    if weather_html:
+        st.markdown(weather_html, unsafe_allow_html=True)
 
     st.markdown("""
     <div style="text-align:center; font-size:12px; color:#8fa3b8;
