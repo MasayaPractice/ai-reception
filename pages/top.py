@@ -4,12 +4,14 @@ pages/top.py
 SFC0002: AIアバター状態切替
 【変更履歴】
 - iOS対応：「タップして開始」ボタン押下まで完全に静止画、押下後に動画再生
+- 天気表示セクション追加：OpenWeatherMapで天気・気温をリアルタイム表示
 """
 import streamlit as st
 import base64
 from pathlib import Path
 from components.header import render_header
 from components.avatar import render_avatar, render_status_badge
+from components.weather import get_weather
 
 WELCOME_VIDEO_PATH = "assets/avatar_top_welcome.mp4"
 STATIC_IMAGE_PATH  = "assets/avatar.png"
@@ -30,13 +32,50 @@ def _render_static_avatar() -> None:
         </div>
         """, unsafe_allow_html=True)
 
+def _render_weather_section() -> None:
+    """天気表示セクション（ヘッダーとステータスの間に表示）"""
+    weather = get_weather()
+    
+    if not weather.get("emoji") or not weather.get("text"):
+        return
+    
+    emoji = weather["emoji"]
+    text = weather["text"]
+    temp = weather["temp"]
+    
+    st.markdown(f"""
+    <div class="weather-section" style="
+        background: #FFFFFF;
+        border-bottom: 0.5px solid #E5E7EB;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+    ">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 32px;">{emoji}</span>
+            <div>
+                <div style="font-size: 18px; font-weight: 500; color: #1F2937;">{text}</div>
+                <div style="font-size: 13px; color: #6B7280;">東京</div>
+            </div>
+        </div>
+        <div style="text-align: center; border-left: 1px solid #E5E7EB; padding-left: 24px;">
+            <div style="font-size: 24px; font-weight: 500; color: #1F2937;">{temp}°C</div>
+            <div style="font-size: 12px; color: #6B7280;">気温</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 def render_top() -> None:
     st.markdown('<div class="reception-wrapper">', unsafe_allow_html=True)
     render_header()
+    
+    _render_weather_section()
+    
     render_status_badge(state="waiting")
 
     if not st.session_state.get("top_welcome_played", False):
-        # ボタン押下前：完全な静止画のみ（口パクなし）
         _render_static_avatar()
 
         st.markdown("""
@@ -62,7 +101,6 @@ def render_top() -> None:
         st.markdown('</div>', unsafe_allow_html=True)
         return
 
-    # ボタン押下後：音声付き動画を再生
     video_path = Path(WELCOME_VIDEO_PATH)
     if video_path.exists():
         video_data = video_path.read_bytes()
