@@ -101,8 +101,8 @@ def render_welcome_known() -> None:
 
     from components.weather import get_weather
     from components.greeting import generate_greeting_message
-    weather = get_weather()
-    greeting_text = generate_greeting_message(visit_count, weather)
+    weather = st.session_state.get("weather", get_weather())
+    greeting_text = generate_greeting_message(visitor_name, visit_count, weather)
 
     st.markdown(f"""
     <div style="background:rgba(255,255,255,0.92);

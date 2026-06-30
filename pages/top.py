@@ -35,7 +35,7 @@ def _render_static_avatar() -> None:
 def _render_weather_section() -> None:
     """天気表示セクション（ヘッダーとステータスの間に表示）"""
     weather = get_weather()
-    
+    st.session_state.weather = weather    
     if not weather.get("emoji") or not weather.get("text"):
         return
     
