@@ -70,14 +70,14 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
         templates = [
             f"{visitor_name}様おはようございます。月曜日からお疲れ様です。",
             f"{visitor_name}様朝早くからのご来社、本当にありがとうございます。",
-            f"{visitor_name}様おはようございます。月曜日は特に大変ですね、お疲れ様です。",
+            f"{visitor_name}様おはようございます。月曜日は特に大変ですね、ご来社ありがとうございます。",
         ]
         return random.choice(templates)
     
     # 【月曜日 + 昼】
     if day_of_week == "月" and time_period == "昼":
         templates = [
-            f"{visitor_name}様お待ちしておりました。月曜日もお疲れ様です。",
+            f"{visitor_name}様お待ちしておりました。月曜日もご来社ありがとうございます。",
             f"{visitor_name}様いつもお世話になっております。月曜日のご来社、ありがとうございます。",
         ]
         return random.choice(templates)
@@ -85,7 +85,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     # 【金曜日 + 朝】
     if day_of_week == "金" and time_period == "朝":
         templates = [
-            f"{visitor_name}様おはようございます。金曜日の朝、本日もよろしくお願いいたします。",
+            f"{visitor_name}様おはようございます。金曜日のご来社、ありがとうございます。",
             f"{visitor_name}様朝早くからのご来社、ありがとうございます。",
         ]
         return random.choice(templates)
@@ -93,9 +93,9 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     # 【金曜日 + 昼】
     if day_of_week == "金" and time_period == "昼":
         templates = [
-            f"{visitor_name}様お待ちしておりました。金曜日ですね、本日もよろしくお願いいたします。",
-            f"{visitor_name}様こんにちは。金曜日も頑張りましょう。",
-            f"{visitor_name}様お世話になっております。金曜日の午後、本日もご利用ありがとうございます。",
+            f"{visitor_name}様お待ちしておりました。金曜日ですね、本日もありがとうございます。",
+            f"{visitor_name}様こんにちは。金曜日のご来社、ありがとうございます。",
+            f"{visitor_name}様お世話になっております。金曜日の午後、本日もご来社ありがとうございます。",
         ]
         return random.choice(templates)
     
@@ -105,7 +105,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     if day_of_week == "月":
         templates = [
             f"{visitor_name}様お待ちしておりました。月曜日のご来社、いつもありがとうございます。",
-            f"{visitor_name}様月曜日もお疲れ様です。本日もよろしくお願いいたします。",
+            f"{visitor_name}様月曜日もご来社ありがとうございます。",
         ]
         return random.choice(templates)
     
@@ -113,7 +113,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     if day_of_week == "金":
         templates = [
             f"{visitor_name}様お待ちしておりました。金曜日ですね。",
-            f"{visitor_name}様こんにちは。金曜日、本日もよろしくお願いいたします。",
+            f"{visitor_name}様こんにちは。金曜日のご来社、ありがとうございます。",
             f"{visitor_name}様いつもお世話になっております。",
         ]
         return random.choice(templates)
@@ -122,7 +122,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     if day_of_week in ["土", "日"]:
         templates = [
             f"{visitor_name}様お待ちしておりました。週末のご来社、ありがとうございます。",
-            f"{visitor_name}様こんにちは。本日もご利用ありがとうございます。",
+            f"{visitor_name}様こんにちは。本日もご来社ありがとうございます。",
         ]
         return random.choice(templates)
     
@@ -133,8 +133,8 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
         templates = [
             f"{visitor_name}様お待ちしておりました。本日は{weather_text}の中ご来社いただきありがとうございます。",
             f"{visitor_name}様いつもお世話になっております。{weather_text}の中のご来社、ご苦労様です。",
-            f"{visitor_name}様こんにちは。{weather_text}ですが、いつもご利用ありがとうございます。",
-            f"{visitor_name}様{weather_text}の中、来てくださってありがとうございます。",
+            f"{visitor_name}様こんにちは。{weather_text}ですが、いつもご来社ありがとうございます。",
+            f"{visitor_name}様{weather_text}の中、ご来社ありがとうございます。",
         ]
         return random.choice(templates)
     
@@ -143,7 +143,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     # 【朝】
     if time_period == "朝":
         templates = [
-            f"{visitor_name}様おはようございます。本日もよろしくお願いいたします。",
+            f"{visitor_name}様おはようございます。本日もありがとうございます。",
             f"{visitor_name}様朝早くからのご来社、ありがとうございます。",
             f"{visitor_name}様おはようございます。いつもお世話になっております。",
         ]
@@ -152,7 +152,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     # 【昼】
     if time_period == "昼":
         templates = [
-            f"{visitor_name}様こんにちは。本日もご利用ありがとうございます。",
+            f"{visitor_name}様こんにちは。本日もご来社ありがとうございます。",
             f"{visitor_name}様お待ちしておりました。",
         ]
         return random.choice(templates)
@@ -160,7 +160,7 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     # 【夕方】
     if time_period == "夕方":
         templates = [
-            f"{visitor_name}様こんばんは。本日もお疲れ様です。",
+            f"{visitor_name}様こんばんは。本日もご来社ありがとうございます。",
             f"{visitor_name}様お待ちしておりました。",
         ]
         return random.choice(templates)
@@ -169,9 +169,9 @@ def generate_greeting_message(visitor_name: str, visit_count: int, weather: dict
     
     templates = [
         f"{visitor_name}様お待ちしておりました。いつもお世話になっております。",
-        f"{visitor_name}様こんにちは。本日もご利用ありがとうございます。",
+        f"{visitor_name}様こんにちは。本日もご来社ありがとうございます。",
         f"{visitor_name}様いつもお世話になっております。",
-        f"{visitor_name}様本日もよろしくお願いいたします。",
+        f"{visitor_name}様本日もご来社ありがとうございます。",
         f"{visitor_name}様お待ちしておりました。",
     ]
     return random.choice(templates)
