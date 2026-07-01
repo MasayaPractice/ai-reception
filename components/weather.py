@@ -39,7 +39,7 @@ def get_weather() -> dict:
             return {"emoji": "", "text": "", "main": "", "temp": 0}
 
         url = "https://api.openweathermap.org/data/2.5/weather"
-        params = {"q": CITY, "appid": api_key, "units": "metric", "lang": "ja"}
+        params = {"lat": 35.6762, "lon": 139.6503, "appid": api_key, "units": "metric", "lang": "ja"}
         resp = requests.get(url, params=params, timeout=5)
         data = resp.json()
 
