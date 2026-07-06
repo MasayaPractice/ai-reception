@@ -122,7 +122,7 @@ def render_welcome_known() -> None:
 
     st.markdown("""
     <div style="text-align:center; font-size:12px; color:#8fa3b8;
-                letter-spacing:0.08em; margin-bottom:24px;">
+                letter-spacing:0.08em; margin-bottom:12px;">
       <span style="color:#4caf50;">●</span>　担当者へ通知しました
     </div>
     """, unsafe_allow_html=True)
