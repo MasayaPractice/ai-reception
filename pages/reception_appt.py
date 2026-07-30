@@ -160,7 +160,7 @@ button[data-testid="stCameraInputButton"]::before {
 
             visitor_id = save_visitor(
                 name=name.strip(), company=company.strip(),
-                visit_type="appointment", contact_person=contact_person.strip(),
+                visit_type="appointment", contact_person=contact_person.strip() if contact_person else "",
                 is_known=True, face_registered=face_registered,
                 name_kana=name_kana.strip(),
             )
