@@ -7,7 +7,7 @@ insightface buffalo_l使用・Supabase対応
 import numpy as np
 import streamlit as st
 
-THRESHOLD = 0.4
+THRESHOLD = 0.5
 
 
 @st.cache_resource
@@ -27,8 +27,16 @@ def extract_encoding(rgb_image) -> np.ndarray | None:
         if not faces:
             return None
         largest = max(faces, key=lambda f: (f.bbox[2]-f.bbox[0]) * (f.bbox[3]-f.bbox[1]))
-        return largest.embedding.astype(np.float32)
-    except Exception:
+        embedding = largest.embedding.astype(np.float32)
+        
+        # L2正規化を明示的に実行
+        norm = np.linalg.norm(embedding)
+        if norm > 0:
+            embedding = embedding / norm
+        
+        return embedding
+    except Exception as e:
+        print(f"[extract_encoding] Error: {e}")
         return None
 
 
@@ -46,6 +54,9 @@ def match_face(encoding: np.ndarray) -> dict | None:
         import base64
         from components.db_cloud import get_face_encodings_for_matching
 
+        if encoding is None or encoding.shape[0] != 512:
+            return None
+
         rows = get_face_encodings_for_matching()
 
         if not rows:
@@ -60,35 +71,48 @@ def match_face(encoding: np.ndarray) -> dict | None:
                 if not enc_b64:
                     continue
                 enc_bytes = base64.b64decode(enc_b64)
-                enc = np.frombuffer(enc_bytes, dtype=np.float32)
-                if enc.shape[0] == encoding.shape[0]:
-                    known_encodings.append(enc)
-                    known_visitors.append(row)
+                enc = np.frombuffer(enc_bytes, dtype=np.float32).copy()
+                
+                if enc.shape[0] != 512:
+                    continue
+                
+                norm = np.linalg.norm(enc)
+                if norm > 0:
+                    enc = enc / norm
+                
+                known_encodings.append(enc)
+                known_visitors.append(row)
             except Exception:
                 continue
 
         if not known_encodings:
             return None
 
+        norm_input = np.linalg.norm(encoding)
+        if norm_input > 0:
+            encoding = encoding / norm_input
+
         best_dist = float("inf")
         best_idx = -1
+        best_sim = -1
 
         for i, known_enc in enumerate(known_encodings):
-            norm_a = np.linalg.norm(encoding)
-            norm_b = np.linalg.norm(known_enc)
-            if norm_a == 0 or norm_b == 0:
-                continue
-            cosine_sim = np.dot(encoding, known_enc) / (norm_a * norm_b)
+            cosine_sim = np.dot(encoding, known_enc)
             dist = 1 - cosine_sim
+            
             if dist < best_dist:
                 best_dist = dist
                 best_idx = i
+                best_sim = cosine_sim
 
         if best_dist <= THRESHOLD and best_idx >= 0:
+            print(f"[match_face] Match found: {best_sim:.4f} (dist: {best_dist:.4f})")
             return known_visitors[best_idx]
+        else:
+            print(f"[match_face] No match: best_sim={best_sim:.4f}, threshold={THRESHOLD}, count={len(known_encodings)}")
 
         return None
 
     except Exception as e:
-        print(f"[face_cloud] match_face エラー: {e}")
+        print(f"[match_face] Error: {e}")
         return None
