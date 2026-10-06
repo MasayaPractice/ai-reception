@@ -145,9 +145,12 @@ def get_active_staff() -> list[dict]:
         result = client.table("staff").select("*").eq(
             "is_active", True
         ).order("id").execute()
+        print(f"[STAFF DEBUG] Query成功: {len(result.data or [])}件")
         return result.data or []
     except Exception as e:
-        print(f"[DB] get_active_staff エラー: {e}")
+        print(f"[STAFF DEBUG] エラー詳細: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
