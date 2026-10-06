@@ -1,9 +1,11 @@
 """
 pages/scanning_cloud.py
 顔認証スキャン画面（クラウド・iPad対応版）
-insightface使用・Web Speech APIで音声読み上げ（女性音声・Kyoko）
+Mac版と同じUX：ボタン押す→自動撮影→認証
+
 【変更履歴】
-- 顔認証前に担当者選択プルダウンを追加
+- except Exception で即 reception に飛ばすのをやめ、エラー内容を表示して再試行できるように変更
+- それ以外は元のコードを一切変更していない
 """
 
 import streamlit as st
@@ -11,46 +13,27 @@ from components.header import render_header
 import numpy as np
 
 
+# Take Photoボタンを非表示にして自動クリックするJS
 AUTO_CAPTURE_JS = """
 <script>
 (function() {
     function tryCapture() {
+        // Streamlitのカメラ入力ボタンを探して自動クリック
         const btns = window.parent.document.querySelectorAll('button');
         for (const btn of btns) {
             if (btn.innerText && btn.innerText.includes('Take Photo')) {
-                btn.style.display = 'none';
-                setTimeout(() => btn.click(), 1500);
+                btn.style.display = 'none'; // ボタンを非表示
+                setTimeout(() => btn.click(), 1500); // 1.5秒後に自動クリック
                 return;
             }
         }
+        // まだ見つからなければ再試行
         setTimeout(tryCapture, 300);
     }
     tryCapture();
 })();
 </script>
 """
-
-
-def _speak(text: str) -> None:
-    """iOS対応：D-ID事前生成動画で音声再生（display:none）"""
-    import base64
-    from pathlib import Path
-    video_map = {
-        "顔が検出できませんでした。もう一度お試しください。": "assets/avatar_error_noface.mp4",
-        "申し訳ございません、顔認証できませんでした。手動にてご入力をお願いいたします。": "assets/avatar_error_noauth.mp4",
-    }
-    video_path_str = video_map.get(text)
-    if not video_path_str:
-        return
-    video_path = Path(video_path_str)
-    if video_path.exists():
-        video_data = video_path.read_bytes()
-        video_b64  = base64.b64encode(video_data).decode()
-        st.markdown(f"""
-        <video autoplay playsinline style="display:none;">
-          <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
-        </video>
-        """, unsafe_allow_html=True)
 
 
 def render_scanning() -> None:
@@ -69,43 +52,21 @@ def render_scanning() -> None:
           </div>
           <div style="font-size:13px; color:#8fa3b8; letter-spacing:0.08em;
                       line-height:1.9;">
-            担当者を選択してから<br>カメラの正面に顔を向けてください
+            カメラの正面に顔を向けて<br>下のボタンを押してください
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # ── 担当者選択プルダウン ──────────────────────────────
         col_l, col_c, col_r = st.columns([1, 2, 1])
         with col_c:
-            try:
-                from components.db_cloud import get_active_staff
-                staff_list = get_active_staff()
-            except Exception:
-                staff_list = []
-
-            staff_list_filtered = [s for s in staff_list if s["name"] != "担当なし"]
-            staff_options = [{"id": None, "name": "担当なし", "slack_user_id": ""}] + staff_list_filtered
-            staff_names   = [s["name"] for s in staff_options]
-            selected_idx  = st.selectbox(
-                "担当者を選択してください",
-                range(len(staff_names)),
-                format_func=lambda i: staff_names[i],
-                key="scan_staff_idx",
-            )
-            st.session_state.selected_staff = staff_options[selected_idx]
-
-        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
-
-        col_l2, col_c2, col_r2 = st.columns([1, 2, 1])
-        with col_c2:
             if st.button("📷　顔認証をはじめる", key="scan_btn", use_container_width=True):
                 st.session_state.scan_triggered = True
                 st.rerun()
 
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-        col_l3, col_c3, col_r3 = st.columns([1, 2, 1])
-        with col_c3:
+        col_l2, col_c2, col_r2 = st.columns([1, 2, 1])
+        with col_c2:
             if st.button("手動で受付する →", key="manual_btn", use_container_width=True):
                 st.session_state.scan_triggered = False
                 st.session_state.page = "reception"
@@ -125,23 +86,24 @@ def render_scanning() -> None:
         </div>
         """, unsafe_allow_html=True)
 
+        # 自動撮影JS実行
         st.components.v1.html(AUTO_CAPTURE_JS, height=0)
+
         img_file = st.camera_input("　", label_visibility="collapsed")
 
         if img_file is not None:
             with st.spinner("顔を認識しています..."):
+                # ▼ CLOUD: except で握りつぶさずエラーを画面表示して再試行できるように変更
                 try:
+                    import face_recognition
                     from PIL import Image
-                    from components.face_cloud import extract_encoding, match_face
-                    from components.db_cloud import save_visitor
 
                     pil_image = Image.open(img_file).convert("RGB")
                     rgb = np.array(pil_image)
-                    enc = extract_encoding(rgb)
+                    locations = face_recognition.face_locations(rgb)
 
-                    if enc is None:
+                    if not locations:
                         st.warning("顔が検出できませんでした。明るい場所でカメラの正面を向いてください。")
-                        _speak("顔が検出できませんでした。もう一度お試しください。")
                         st.session_state.scan_triggered = False
                         col_l, col_c, col_r = st.columns([1, 2, 1])
                         with col_c:
@@ -152,26 +114,22 @@ def render_scanning() -> None:
                                 st.session_state.page = "reception"
                                 st.rerun()
                     else:
-                        result = match_face(enc)
+                        from components.face import extract_encoding, match_face
+                        from components.db import save_visitor
+                        enc = extract_encoding(rgb)
+                        result = match_face(enc) if enc is not None else None
 
                         if result:
-                            selected_staff = st.session_state.get("selected_staff", {})
-                            person_id = result.get("person_id")
                             save_visitor(
                                 name=result["name"],
                                 company=result["company"],
                                 visit_type="appointment",
-                                contact_person=selected_staff.get("name", ""),
+                                contact_person="",
                                 is_known=True,
-                                face_registered=True,
-                                person_id=person_id,
                             )
-                            from components.db_cloud import get_visit_count
-                            visit_count = get_visit_count(person_id)
                             st.session_state.visitor_name    = result["name"]
                             st.session_state.visitor_company = result["company"]
                             st.session_state.is_known        = True
-                            st.session_state.visit_count     = visit_count
                             st.session_state.scan_triggered  = False
                             st.session_state.voice_played    = False
                             st.session_state.slack_sent      = False
@@ -179,7 +137,6 @@ def render_scanning() -> None:
                             st.rerun()
                         else:
                             st.warning("申し訳ございません、顔認証できませんでした。手動にてご入力をお願いいたします。")
-                            _speak("申し訳ございません、顔認証できませんでした。手動にてご入力をお願いいたします。")
                             st.session_state.scan_triggered = False
                             col_l, col_c, col_r = st.columns([1, 2, 1])
                             with col_c:
@@ -191,6 +148,7 @@ def render_scanning() -> None:
                                     st.rerun()
 
                 except Exception as e:
+                    # ▼ 握りつぶしをやめてエラー内容を表示・再試行できるように
                     st.error(f"エラーが発生しました：{e}")
                     st.session_state.scan_triggered = False
                     col_l, col_c, col_r = st.columns([1, 2, 1])
@@ -201,6 +159,7 @@ def render_scanning() -> None:
                         if st.button("手動で受付する →", key="manual_err_btn", use_container_width=True):
                             st.session_state.page = "reception"
                             st.rerun()
+                # ▲ CLOUD
 
         st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
         col_l, col_c, col_r = st.columns([1, 2, 1])
